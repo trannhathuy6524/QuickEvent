@@ -399,3 +399,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# ASP.NET Core secrets
+appsettings.Development.json
+appsettings.json
+appsettings.Production.json
