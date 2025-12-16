@@ -1,0 +1,185 @@
+﻿@model QuickEvent.Areas.Admin.Models.UserManagementViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa người dùng";
+}
+
+<style>
+    .useredit-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, sans-serif;
+    }
+
+    h1 {
+        color: #FF385C;
+        font-weight: 600;
+        font-size: 32px;
+        font-family: Arial, sans-serif;
+        margin-bottom: 24px;
+    }
+
+    .form-floating label {
+        color: #FF385C;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .form-control {
+        border: 1px solid #222222;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        padding: 12px;
+    }
+
+    .btn-custom {
+        border: 1px solid #222222;
+        background-color: transparent;
+        color: #222222;
+        padding: 8px 16px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        transition: border-color 0.3s, color 0.3s;
+        transform: scale(1.1);
+        font-family: Arial, sans-serif;
+        text-decoration: none;
+        margin-right: 8px;
+    }
+
+        .btn-custom i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 4px;
+        }
+
+        .btn-custom:hover {
+            border-color: #FF385C;
+            color: #FF385C;
+        }
+
+            .btn-custom:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .text-danger {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+<div class="useredit-container">
+    <h1>Chỉnh sửa người dùng</h1>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+        </div>
+    }
+
+    <form asp-action="Edit" asp-controller="UserManagement" asp-area="Admin" method="post">
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-floating mb-3">
+            <input asp-for="FullName" class="form-control" placeholder="Họ tên" required />
+            <label asp-for="FullName">Họ tên</label>
+            <span asp-validation-for="FullName" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Email" class="form-control" placeholder="Email" required />
+            <label asp-for="Email">Email</label>
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="PhoneNumber" class="form-control" placeholder="Số điện thoại" />
+            <label asp-for="PhoneNumber">Số điện thoại</label>
+            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <select asp-for="SelectedRole" class="form-control" required>
+                <option value="">-- Chọn phân quyền --</option>
+                @foreach (var role in Model.AvailableRoles)
+                {
+                    <option value="@role" selected="@(Model.SelectedRole == role)">@role</option>
+                }
+            </select>
+            <label asp-for="SelectedRole">Phân quyền</label>
+            <span asp-validation-for="SelectedRole" class="text-danger"></span>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-custom">
+                <i class="bi bi-save"></i> Lưu
+                <span class="tooltip-text">Lưu thay đổi</span>
+            </button>
+            <a asp-action="Index" class="btn btn-custom">
+                <i class="bi bi-arrow-left"></i> Hủy
+                <span class="tooltip-text">Quay lại</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            // Kích hoạt validation ngay khi form load
+            $('form').data('validator', null);
+            $.validator.unobtrusive.parse($('form'));
+
+            // Log validation errors
+            $('form').on('submit', function (e) {
+                var form = $(this);
+                if (!form.valid()) {
+                    console.log('Form validation errors:');
+                    $('.field-validation-error').each(function() {
+                        console.log($(this).text());
+                    });
+                    return false;
+                }
+                return true;
+            });
+        });
+
+        // Animation for buttons
+        document.querySelectorAll('.btn-custom').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!btn.classList.contains('animate__animated')) {
+                    btn.classList.add('animate__animated', 'animate__pulse');
+                    setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+                }
+            });
+        });
+    </script>
+}

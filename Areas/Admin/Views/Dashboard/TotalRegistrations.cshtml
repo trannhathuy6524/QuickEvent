@@ -1,0 +1,101 @@
+﻿@model QuickEvent.Areas.Admin.Models.StatisticsViewModel
+@{
+    ViewData["Title"] = "Thống kê đăng ký";
+}
+
+<div class="container py-4">
+    <div class="dashboard-container">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="display-6 fw-bold">Thống kê đăng ký</h1>
+                <p class="text-muted">Chi tiết về các đăng ký sự kiện trong hệ thống</p>
+            </div>
+        </div>
+
+        <!-- Thẻ thống kê tổng quan -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-muted">Tổng số đăng ký</h6>
+                                <h2 class="card-title mb-0">@Model.TotalRegistrations</h2>
+                            </div>
+                            <div class="p-3 rounded">
+                                <i class="bi bi-ticket-perforated fs-2 text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thẻ đăng ký mới -->
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-muted">Đăng ký mới (24h)</h6>
+                                <h2 class="card-title mb-0">@Model.NewRegistrationsLast24Hours</h2>
+                            </div>
+                            <div class="p-3 rounded">
+                                <i class="bi bi-calendar-plus fs-2 text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng thống kê chi tiết -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <h5 class="mb-0">Thống kê theo sự kiện</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Sự kiện</th>
+                                        <th>Số đăng ký</th>
+                                        <th>Giới hạn</th>
+                                        <th>Trạng thái</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nút điều hướng -->
+        <div class="row">
+            <div class="col-12">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-secondary" data-bs-toggle="tooltip" 
+                    title="Quay lại trang Dashboard">
+                    <i class="bi bi-arrow-left"></i>
+                    <span class="tooltip-text">Quay lại Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+            });
+        });
+    </script>
+}

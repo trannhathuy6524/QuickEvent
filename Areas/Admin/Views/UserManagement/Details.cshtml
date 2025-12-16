@@ -1,0 +1,112 @@
+﻿@model QuickEvent.Areas.Admin.Models.UserManagementViewModel
+@{
+    ViewData["Title"] = "Chi tiết người dùng";
+}
+
+<style>
+    .userdetails-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, sans-serif;
+    }
+
+    h1 {
+        color: #FF385C;
+        font-weight: 600;
+        font-size: 32px;
+        font-family: Arial, sans-serif;
+        margin-bottom: 24px;
+    }
+
+    .userdetails-container p {
+        color: #222222;
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+
+    .userdetails-container strong {
+        color: #FF385C;
+        font-weight: 600;
+    }
+
+    .btn-custom {
+        border: 1px solid #222222;
+        background-color: transparent;
+        color: #222222;
+        padding: 8px 16px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        transition: border-color 0.3s, color 0.3s;
+        transform: scale(1.1);
+        font-family: Arial, sans-serif;
+        text-decoration: none;
+        margin-right: 8px;
+    }
+
+        .btn-custom i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 4px;
+        }
+
+        .btn-custom:hover {
+            border-color: #FF385C;
+            color: #FF385C;
+        }
+
+            .btn-custom:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text {
+            visibility: visible;
+        }
+</style>
+
+<div class="userdetails-container">
+    <h1>Chi tiết người dùng</h1>
+    <p><strong>Họ tên:</strong> @Model.FullName</p>
+    <p><strong>Email:</strong> @Model.Email</p>
+    <p><strong>Số điện thoại:</strong> @Model.PhoneNumber</p>
+    <p><strong>Loại người dùng:</strong> @Model.UserType</p>
+    <p><strong>Ngày đăng ký:</strong> @Model.RegistrationDate.ToString("dd/MM/yyyy")</p>
+    <p><strong>Trạng thái:</strong> @(Model.IsLocked ? "Khóa" : "Hoạt động")</p>
+    <p><strong>Được duyệt:</strong> @(Model.IsApproved ? "Có" : "Không")</p>
+    <p><strong>Vai trò:</strong> @string.Join(", ", Model.Roles)</p>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-custom"><i class="bi bi-pencil"></i> Sửa<span class="tooltip-text">Chỉnh sửa</span></a>
+    <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="btn btn-custom"><i class="bi bi-key"></i> Đặt lại mật khẩu<span class="tooltip-text">Đặt lại mật khẩu</span></a>
+    <a asp-action="Index" class="btn btn-custom"><i class="bi bi-arrow-left"></i> Quay lại<span class="tooltip-text">Quay lại danh sách</span></a>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-custom').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+            });
+        });
+    </script>
+}

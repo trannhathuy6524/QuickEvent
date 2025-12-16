@@ -1,0 +1,252 @@
+﻿@model QuickEvent.Areas.Organizer.Models.ReportViewModel
+
+<style>
+    .report-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 800px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .report-container h3 {
+            color: #00AEEF;
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+    .btn-secondary {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        margin-right: 8px;
+    }
+
+        .btn-secondary i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #00AEEF;
+        }
+
+            .btn-secondary:hover i {
+                color: #00AEEF;
+            }
+
+        .btn-secondary .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-secondary:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Báo cáo thống kê - @Model.EventTitle</h2>
+<div class="report-container">
+    <div>
+        <h3>Tỷ lệ hoàn thành form: @(double.IsNaN(Model.FormCompletionRate) || double.IsInfinity(Model.FormCompletionRate) ? "N/A" : Model.FormCompletionRate.ToString("F2"))%</h3>
+        <h3>Tỷ lệ no-show: @(double.IsNaN(Model.NoShowRate) || double.IsInfinity(Model.NoShowRate) ? "N/A" : Model.NoShowRate.ToString("F2"))%</h3>
+    </div>
+
+    <h3>Số lượng đăng ký theo ngày</h3>
+    <div class="nav-buttons">
+        <button id="prevDay" class="btn-secondary"><i class="bi bi-chevron-left"></i><span class="tooltip-text">Tuần trước</span></button>
+        <button id="nextDay" class="btn-secondary"><i class="bi bi-chevron-right"></i><span class="tooltip-text">Tuần sau</span></button>
+    </div>
+    <canvas id="dailyChart" width="600" height="300"></canvas>
+
+    <h3>Số lượng đăng ký theo tuần</h3>
+    <div class="nav-buttons">
+        <button id="prevWeek" class="btn-secondary"><i class="bi bi-chevron-left"></i><span class="tooltip-text">4 tuần trước</span></button>
+        <button id="nextWeek" class="btn-secondary"><i class="bi bi-chevron-right"></i><span class="tooltip-text">4 tuần sau</span></button>
+    </div>
+    <canvas id="weeklyChart" width="600" height="300"></canvas>
+
+    <a asp-controller="Event" asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i><span class="tooltip-text">Quay lại</span></a>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        let dailyChartInstance = null;
+        let weeklyChartInstance = null;
+        let currentWeekStart = new Date();
+        let currentMonthStart = new Date();
+
+        // Khởi tạo ngày bắt đầu
+        currentWeekStart.setDate(currentWeekStart.getDate() - (currentWeekStart.getDay() || 7) + 1); // Thứ Hai
+        currentMonthStart.setDate(1);
+        currentMonthStart.setDate(currentMonthStart.getDate() - (currentMonthStart.getDay() || 7) + 1); // Thứ Hai của tuần chứa ngày 1
+
+        // Dữ liệu ban đầu từ Model
+        const initialDailyRegistrations = @Html.Raw(Json.Serialize(Model.RegistrationsByDay.ToDictionary(
+        kvp => kvp.Key.ToString("yyyy-MM-dd"),
+        kvp => kvp.Value
+    )));
+        const initialWeeklyRegistrations = @Html.Raw(Json.Serialize(Model.RegistrationsByWeek.ToDictionary(
+        kvp => kvp.Key.ToString("yyyy-MM-dd"),
+        kvp => kvp.Value
+    )));
+
+        // Hàm vẽ biểu đồ ngày
+        function drawDailyChart(registrations) {
+            if (dailyChartInstance) dailyChartInstance.destroy();
+            const labels = [];
+            const counts = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(currentWeekStart);
+                date.setDate(currentWeekStart.getDate() + i);
+                const key = date.toISOString().split('T')[0];
+                labels.push(date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }));
+                counts.push(registrations[key] || 0);
+            }
+
+            const data = {
+                labels: labels,
+                datasets: [{
+                    label: "Số lượng đăng ký",
+                    data: counts,
+                    backgroundColor: "#00AEEF",
+                    borderColor: "#222222",
+                    borderWidth: 1
+                }]
+            };
+
+            dailyChartInstance = new Chart(document.getElementById('dailyChart').getContext('2d'), {
+                type: 'bar',
+                data: data,
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng đăng ký' } },
+                        x: { title: { display: true, text: 'Ngày' } }
+                    },
+                    plugins: { legend: { display: true } }
+                }
+            });
+        }
+
+        // Hàm vẽ biểu đồ tuần
+        function drawWeeklyChart(registrations) {
+            if (weeklyChartInstance) weeklyChartInstance.destroy();
+            const labels = [];
+            const counts = [];
+            for (let i = 0; i < 4; i++) {
+                const weekStart = new Date(currentMonthStart);
+                weekStart.setDate(currentMonthStart.getDate() + i * 7);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                const key = weekStart.toISOString().split('T')[0];
+                labels.push(`Tuần ${weekStart.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} - ${weekEnd.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`);
+                counts.push(registrations[key] || 0);
+            }
+
+            const data = {
+                labels: labels,
+                datasets: [{
+                    label: "Số lượng đăng ký",
+                    data: counts,
+                    backgroundColor: "#00AEEF",
+                    borderColor: "#222222",
+                    borderWidth: 1
+                }]
+            };
+
+            weeklyChartInstance = new Chart(document.getElementById('weeklyChart').getContext('2d'), {
+                type: 'bar',
+                data: data,
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng đăng ký' } },
+                        x: { title: { display: true, text: 'Tuần' } }
+                    },
+                    plugins: { legend: { display: true } }
+                }
+            });
+        }
+
+        // Hàm lấy dữ liệu ngày qua AJAX
+        async function fetchDailyData(startDate) {
+            try {
+                const response = await fetch(`/Organizer/Registration/GetRegistrationsByDay?eventId=@Model.EventId&startDate=${startDate.toISOString()}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error('Lỗi khi lấy dữ liệu ngày');
+                const data = await response.json();
+                console.log('Daily Data:', data);
+                drawDailyChart(data);
+            } catch (error) {
+                console.error('Error fetching daily data:', error);
+            }
+        }
+
+        // Hàm lấy dữ liệu tuần qua AJAX
+        async function fetchWeeklyData(startDate) {
+            try {
+                const response = await fetch(`/Organizer/Registration/GetRegistrationsByWeek?eventId=@Model.EventId&startDate=${startDate.toISOString()}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error('Lỗi khi lấy dữ liệu tuần');
+                const data = await response.json();
+                console.log('Weekly Data:', data);
+                drawWeeklyChart(data);
+            } catch (error) {
+                console.error('Error fetching weekly data:', error);
+            }
+        }
+
+        // Khởi tạo biểu đồ
+        drawDailyChart(initialDailyRegistrations);
+        drawWeeklyChart(initialWeeklyRegistrations);
+
+        // Sự kiện nút điều hướng
+        document.getElementById('prevDay').addEventListener('click', () => {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            fetchDailyData(currentWeekStart);
+        });
+
+        document.getElementById('nextDay').addEventListener('click', () => {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            fetchDailyData(currentWeekStart);
+        });
+
+        document.getElementById('prevWeek').addEventListener('click', () => {
+            currentMonthStart.setDate(currentMonthStart.getDate() - 28);
+            fetchWeeklyData(currentMonthStart);
+        });
+
+        document.getElementById('nextWeek').addEventListener('click', () => {
+            currentMonthStart.setDate(currentMonthStart.getDate() + 28);
+            fetchWeeklyData(currentMonthStart);
+        });
+    </script>
+}

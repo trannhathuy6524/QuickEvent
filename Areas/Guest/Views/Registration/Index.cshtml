@@ -1,0 +1,131 @@
+﻿@model QuickEvent.Areas.Guest.Models.RegistrationViewModel
+@inject QuickEvent.Repositories.Interfaces.IEventRepository EventRepository
+
+@{
+    var @item = await EventRepository.GetEventByIdAsync(Model.EventId);
+}
+
+<style>
+    .register-form {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .register-form label {
+            color: #FF385C;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .register-form p {
+            color: #222222;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .register-form strong {
+            color: #FF385C;
+            font-weight: 600;
+        }
+
+    .form-control {
+        border: 1px solid #717171;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 14px;
+        color: #222222;
+    }
+
+    .btn-custom, .btn-secondary {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        margin-right: 8px;
+    }
+
+        .btn-custom i, .btn-secondary i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-custom:hover, .btn-secondary:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i, .btn-secondary:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text, .btn-secondary .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text, .btn-secondary:hover .tooltip-text {
+            visibility: visible;
+        }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Đăng ký sự kiện - @item?.Title</h2>
+<div class="register-form">
+    <p><strong>Ngày:</strong> @item?.StartDate.ToString("g")</p>
+    <p><strong>Địa điểm:</strong> @item?.Location</p>
+    <form asp-action="Submit" method="post">
+        <input type="hidden" asp-for="EventId" />
+        <div class="form-group">
+            <label asp-for="FullName">Họ tên</label>
+            <input asp-for="FullName" class="form-control" />
+            <span asp-validation-for="FullName" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Email">Email</label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="PhoneNumber">Số điện thoại</label>
+            <input asp-for="PhoneNumber" class="form-control" />
+            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="AdditionalInfo">Thông tin bổ sung</label>
+            <textarea asp-for="AdditionalInfo" class="form-control" rows="4"></textarea>
+        </div>
+        <button type="submit" class="btn btn-custom"><i class="bi bi-person-plus"></i><span class="tooltip-text">Đăng ký</span></button>
+        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i><span class="tooltip-text">Hủy</span></a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelector('.register-form').addEventListener('submit', () => {
+            document.querySelector('.btn-custom').classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => document.querySelector('.btn-custom').classList.remove('animate__animated', 'animate__pulse'), 500);
+        });
+    </script>
+}

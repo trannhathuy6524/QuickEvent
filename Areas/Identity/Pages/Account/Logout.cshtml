@@ -1,0 +1,99 @@
+﻿@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Đăng xuất";
+}
+
+<style>
+    .logout-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+        text-align: center;
+    }
+
+    .btn-custom {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 8px 16px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        color: #222222;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .btn-custom i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .btn-custom:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .text-success {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+    }
+</style>
+
+<header>
+    <h1 style="font-family: Arial, Helvetica, sans-serif; color: #FF385C; font-weight: 600; font-size: 32px; margin-bottom: 24px;">Đăng xuất</h1>
+    <div class="logout-container">
+        @{
+            if (User.Identity?.IsAuthenticated ?? false)
+            {
+                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                    <button type="submit" class="btn btn-custom"><i class="bi bi-box-arrow-right"></i> Nhấn để đăng xuất<span class="tooltip-text">Đăng xuất khỏi tài khoản</span></button>
+                </form>
+            }
+            else
+            {
+                <p><i class="bi bi-check-circle text-success"></i> Bạn đã đăng xuất thành công khỏi ứng dụng.</p>
+            }
+        }
+    </div>
+</header>
+
+<script>
+    document.querySelectorAll('.btn-custom').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+        });
+    });
+</script>

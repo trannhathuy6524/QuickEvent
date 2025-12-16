@@ -1,0 +1,63 @@
+﻿@inject SignInManager<ApplicationUser> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+<style>
+    .nav-pills .nav-link {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        color: #222222;
+        border: 1px solid #222222;
+        background-color: transparent;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        padding: 8px 16px;
+        transition: border-color 0.3s, color 0.3s;
+        transform: scale(1.1);
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .nav-pills .nav-link:hover {
+            border-color: #FF385C;
+            color: #FF385C;
+            text-decoration: none;
+        }
+
+        .nav-pills .nav-link.active {
+            border-color: #FF385C;
+            color: #FF385C;
+            background-color: transparent;
+        }
+
+        .nav-pills .nav-link .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .nav-pills .nav-link:hover .tooltip-text {
+            visibility: visible;
+        }
+</style>
+
+<ul class="nav nav-pills flex-column">
+    <li class="nav-item"><a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Hồ sơ<span class="tooltip-text">Xem và chỉnh sửa hồ sơ</span></a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">Email<span class="tooltip-text">Quản lý email</span></a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Mật khẩu<span class="tooltip-text">Đổi mật khẩu</span></a></li>
+    @if (hasExternalLogins)
+    {
+        <li id="external-logins" class="nav-item"><a id="external-login" class="nav-link @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">Đăng nhập bên ngoài<span class="tooltip-text">Quản lý đăng nhập bên ngoài</span></a></li>
+    }
+    <li class="nav-item"><a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">Xác thực hai yếu tố<span class="tooltip-text">Quản lý 2FA</span></a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">Dữ liệu cá nhân<span class="tooltip-text">Quản lý dữ liệu cá nhân</span></a></li>
+</ul>

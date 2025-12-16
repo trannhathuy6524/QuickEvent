@@ -1,0 +1,106 @@
+﻿@model IEnumerable<QuickEvent.Models.Event>
+
+<style>
+    .table {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .table th {
+            background-color: #F7F7F7;
+            color: #222222;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+        .table td {
+            color: #222222;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+            .table td a {
+                color: #222222;
+                text-decoration: none;
+                margin-right: 8px;
+                border: 1px solid #222222;
+                background-color: transparent;
+                padding: 6px 12px;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                font-size: 12px;
+                line-height: 1;
+                transition: border-color 0.3s;
+                transform: scale(1.1);
+            }
+
+                .table td a i {
+                    color: #222222;
+                    font-size: 16px;
+                }
+
+                .table td a:hover {
+                    border-color: #FF385C;
+                }
+
+                    .table td a:hover i {
+                        color: #FF385C;
+                    }
+
+                .table td a .tooltip-text {
+                    visibility: hidden;
+                    background-color: #222222;
+                    color: #FFFFFF;
+                    text-align: center;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                    position: absolute;
+                    z-index: 1;
+                    bottom: -40px;
+                    font-size: 12px;
+                    white-space: nowrap;
+                }
+
+                .table td a:hover .tooltip-text {
+                    visibility: visible;
+                }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Quản lý Sự kiện</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Tiêu đề</th>
+            <th>Ngày bắt đầu</th>
+            <th>Địa điểm</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var @item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.StartDate.ToString("g")</td>
+                <td>@item.Location</td>
+                <td>@item.Status</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id"><i class="bi bi-info-circle"></i><span class="tooltip-text">Chi tiết</span></a> 
+                    @if (@item.Status != "Chấp nhận")
+                    {
+                        <a asp-action="Approve" asp-route-id="@item.Id"><i class="bi bi-check-circle"></i><span class="tooltip-text">Phê duyệt</span></a>
+                    }
+                    <a asp-action="Delete" asp-route-id="@item.Id"><i class="bi bi-trash"></i><span class="tooltip-text">Xóa</span></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

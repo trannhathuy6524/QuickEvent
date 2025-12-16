@@ -1,0 +1,234 @@
+﻿@model IEnumerable<QuickEvent.Models.Event>
+@{
+    ViewData["title"] = "Home Page";
+}
+<style>
+    .home-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        max-width: 1000px;
+        margin: 24px auto;
+        font-family: Arial, sans-serif;
+    }
+
+    .form-check-input {
+        margin-top: 0;
+        cursor: pointer;
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        color: #222222;
+        font-size: 14px;
+    }
+
+    .text-success, .text-danger {
+        font-weight: 500;
+    }
+
+        .text-success i, .text-danger i {
+            margin-right: 4px;
+        }
+
+    .search-form {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+        align-items: center;
+    }
+
+    .table th {
+        background-color: #F7F7F7;
+        color: #222222;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    .table td {
+        color: #333;
+        font-size: 14px;
+        padding: 12px;
+    }
+
+        .table td a {
+            border: 1px solid #222222;
+            background-color: transparent;
+            color: #222222;
+            padding: 6px 12px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-size: 12px;
+            text-decoration: none;
+            transition: border-color 0.3s, color 0.3s;
+            transform: scale(1.1);
+        }
+
+            .table td a i {
+                color: #222222;
+                font-size: 16px;
+                margin-right: 4px;
+            }
+
+            .table td a:hover {
+                border-color: #FF385C;
+                color: #FF385C;
+            }
+
+                .table td a:hover i {
+                    color: #FF385C;
+                }
+
+            .table td a .tooltip-text {
+                visibility: hidden;
+                background-color: #222222;
+                color: #FFFFFF;
+                text-align: center;
+                border-radius: 6px;
+                padding: 8px 12px;
+                position: absolute;
+                z-index: 1;
+                bottom: -40px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+
+            .table td a:hover .tooltip-text {
+                visibility: visible;
+            }
+
+    .btn-custom {
+        border: 1px solid #222222;
+        background-color: transparent;
+        color: #222222;
+        padding: 8px 16px;
+        border-radius: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        transition: border-color 0.3s, color 0.3s;
+        transform: scale(1.1);
+        font-family: Arial, sans-serif;
+    }
+
+        .btn-custom i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 4px;
+        }
+
+        .btn-custom:hover {
+            border-color: #FF385C;
+            color: #FF385C;
+        }
+
+            .btn-custom:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .search-form {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+    }
+
+        .search-form input {
+            border: 1px solid #222222;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+
+    .action-column {
+        width: 150px; /* Hoặc giá trị bạn muốn */
+        min-width: 150px;
+    }
+</style>
+
+<h2 style="font-family: Arial, sans-serif; color: #FF385C; font-weight: 600; font-size: 28px; margin-bottom: 24px;">Chào mừng đến với QuickEvent</h2>
+<div class="home-container">
+    <form asp-action="Search" method="get" class="search-form">
+        <input type="text" name="query" placeholder="Tìm kiếm sự kiện..." class="form-control" />
+        <div class="form-check ms-2 d-flex align-items-center">
+            <input class="form-check-input" type="checkbox" id="filterStatus" name="activeOnly" value="true">
+            <label class="form-check-label ms-2" for="filterStatus" style="color: #222222; font-size: 14px;">
+                Sự kiện đang hoạt động
+            </label>
+        </div>
+        <button type="submit" class="btn btn-custom"><i class="bi bi-search"></i><span class="tooltip-text">Tìm sự kiện</span></button>
+    </form>
+    <h3 style="font-family: Arial, sans-serif; color: #FF385C; font-weight: 600; font-size: 20px; margin-bottom: 16px;">Sự kiện nổi bật</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Tên sự kiện</th>
+                <th>Ngày bắt đầu</th>
+                <th>Địa điểm</th>
+                <th>Trạng thái</th>
+                <th class="action-column">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var @item in Model)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.StartDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@item.Location</td>
+                    <td>
+                        @{
+                            var now = DateTime.Now;
+                            var status = item.EndDate.HasValue && item.EndDate.Value < now ? "Kết thúc" : "Hoạt động";
+                            var statusClass = status == "Kết thúc" ? "text-danger" : "text-success";
+                        }
+                        <span class="@statusClass">
+                            <i class="bi @(status == "Kết thúc" ? "bi-x-circle" : "bi-check-circle")"></i>
+                            @status
+                        </span>
+                    </td>
+                    <td class="action-column">
+                        <a asp-area="Guest" asp-controller="Registration" asp-action="Index" asp-route-eventId="@item.Id">
+                            <i class="bi bi-person-plus"></i> Đăng ký
+                            <span class="tooltip-text">Đăng ký sự kiện</span>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.querySelectorAll('.btn-custom').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+        });
+    });
+</script>

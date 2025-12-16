@@ -1,0 +1,201 @@
+﻿@model IEnumerable<QuickEvent.Areas.Guest.Models.RegistrationHistoryViewModel>
+
+@{
+    ViewData["Title"] = "Lịch sử tham gia";
+}
+
+<style>
+    .table {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .table th {
+            background-color: #F7F7F7;
+            color: #222222;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+        .table td {
+            color: #222222;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+            .table td a {
+                color: #222222;
+                text-decoration: none;
+                border: 1px solid #222222;
+                background-color: transparent;
+                padding: 6px 12px;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                font-size: 12px;
+                line-height: 1;
+                transition: border-color 0.3s;
+                transform: scale(1.1);
+                margin-right: 8px;
+            }
+
+                .table td a i {
+                    color: #222222;
+                    font-size: 16px;
+                }
+
+                .table td a:hover {
+                    border-color: #FF385C;
+                }
+
+                    .table td a:hover i {
+                        color: #FF385C;
+                    }
+
+                .table td a .tooltip-text {
+                    visibility: hidden;
+                    background-color: #222222;
+                    color: #FFFFFF;
+                    text-align: center;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                    position: absolute;
+                    z-index: 1;
+                    bottom: -40px;
+                    font-size: 12px;
+                    white-space: nowrap;
+                }
+
+                .table td a:hover .tooltip-text {
+                    visibility: visible;
+                }
+
+    .btn-custom, .btn-secondary {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        margin-right: 8px;
+    }
+
+        .btn-custom i, .btn-secondary i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-custom:hover, .btn-secondary:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i, .btn-secondary:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text, .btn-secondary .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text, .btn-secondary:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .text-success, .text-danger, .text-muted, p {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Lịch sử tham gia</h2>
+
+@if (TempData["Message"] != null)
+{
+    <p class="text-success"><i class="bi bi-check-circle"></i> @TempData["Message"]</p>
+}
+@if (TempData["Error"] != null)
+{
+    <p class="text-danger"><i class="bi bi-exclamation-circle"></i> @TempData["Error"]</p>
+}
+
+@if (!Model.Any())
+{
+    <p>Bạn chưa đăng ký sự kiện nào.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Sự kiện</th>
+                <th>Thời gian diễn ra</th>
+                <th>Địa điểm</th>
+                <th>Ngày đăng ký</th>
+                <th>Trạng thái</th>
+                <th>Tham gia</th>
+                <th>Thời gian check-in</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-area="Guest" asp-controller="Event" asp-action="Details" asp-route-id="@item.EventId"><span class="tooltip-text">Xem chi tiết</span>@item.EventTitle</a>
+                    </td>
+                    <td>@item.EventStartDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@item.EventLocation</td>
+                    <td>@item.RegistrationDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        @if (!item.IsCancelled)
+                        {
+                            <span class="text-success"><i class="bi bi-check-circle"></i> Đã đăng ký</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger"><i class="bi bi-x-circle"></i> Đã hủy</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.HasCheckedIn)
+                        {
+                            <span class="text-success"><i class="bi bi-check-circle"></i> Đã tham gia</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted"><i class="bi bi-circle"></i> Chưa tham gia</span>
+                        }
+                    </td>
+                    <td>@(item.CheckInTime?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div>
+    <a asp-action="MyRegistrations" class="btn btn-secondary"><i class="bi bi-arrow-left"></i><span class="tooltip-text">Quay lại đăng ký của tôi</span></a>
+    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-custom"><i class="bi bi-house"></i><span class="tooltip-text">Trang chủ</span></a>
+</div>

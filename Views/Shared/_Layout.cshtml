@@ -1,0 +1,214 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - QuickEvent</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/QuickEvent.styles.css" asp-append-version="true" />
+
+    <style>
+        .navbar {
+            background-color: #F7F7F7;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar-nav .nav-item {
+            margin-right: 12px; /* hoặc margin-left: 12px nếu bạn muốn chỉnh hướng trái */
+        }
+
+        .navbar-brand, .nav-link {
+            color: #222222 !important;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.3s;
+        }
+
+            .navbar-brand i, .nav-link i {
+                color: #222222;
+                font-size: 18px;
+                margin-right: 4px;
+            }
+
+            .nav-link:hover {
+                color: #FF385C !important;
+            }
+
+                .nav-link:hover i {
+                    color: #FF385C;
+                }
+
+            .nav-link .tooltip-text {
+                visibility: hidden;
+                background-color: #222222;
+                color: #FFFFFF;
+                text-align: center;
+                border-radius: 6px;
+                padding: 8px 12px;
+                position: absolute;
+                z-index: 1;
+                bottom: -40px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+
+            .nav-link:hover .tooltip-text {
+                visibility: visible;
+            }
+
+        .badge {
+            background-color: #FF385C;
+            font-family: Arial, sans-serif;
+        }
+
+        .footer {
+            background-color: #F7F7F7;
+            padding: 2px 0; /* ↓ Giảm từ 16px xuống 8px */
+            font-family: Arial, sans-serif;
+        }
+
+            .footer a {
+                color: #222222;
+                text-decoration: none;
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+            }
+
+                .footer a:hover {
+                    color: #FF385C;
+                }
+
+                .footer a .tooltip-text {
+                    visibility: hidden;
+                    background-color: #222222;
+                    color: #FFFFFF;
+                    text-align: center;
+                    border-radius: 3px;
+                    padding: 1px 0px;
+                    position: absolute;
+                    z-index: 1;
+                    bottom: -40px;
+                    font-size: 14px;
+                    white-space: nowrap;
+                }
+
+                .footer a:hover .tooltip-text {
+                    visibility: visible;
+                }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom mb-3">
+            <div class="container-fluid">
+				<a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"><i class="bi bi-calendar-event"></i> QuickEvent<span class="tooltip-text"></span></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Chuyển đổi điều hướng">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @if (User.IsInRole("Organizer"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Organizer" asp-controller="Event" asp-action="Index"><i class="bi bi-list-ul"></i> Danh sách sự kiện<span class="tooltip-text">Quản lý sự kiện</span></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Guest" asp-controller="Registration" asp-action="MyRegistrations"><i class="bi bi-person-check"></i> Đăng ký của tôi<span class="tooltip-text">Xem đăng ký</span></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Organizer" asp-controller="Notification" asp-action="Index">
+                                    <i class="bi bi-bell"></i> Thông báo
+                                    @if (ViewData["UnreadNotificationCount"] != null && Convert.ToInt32(ViewData["UnreadNotificationCount"]) > 0)
+                                    {
+                                        <span class="badge bg-danger">@ViewData["UnreadNotificationCount"]</span>
+                                    }
+                                    <span class="tooltip-text">Xem thông báo</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Organizer" asp-controller="CheckIn" asp-action="QR_Check">
+                                    <i class="bi bi-qr-code-scan"></i> Check-in QR
+                                    <span class="tooltip-text">Quét mã QR Check-in</span>
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Guest"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Guest" asp-controller="Registration" asp-action="History"><i class="bi bi-clock-history"></i> Lịch sử tham gia<span class="tooltip-text">Xem lịch sử</span></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Guest" asp-controller="Notification" asp-action="Index">
+                                    <i class="bi bi-bell"></i> Thông báo
+                                    @if (ViewData["UnreadNotificationCount"] != null && Convert.ToInt32(ViewData["UnreadNotificationCount"]) > 0)
+                                    {
+                                        <span class="badge bg-danger">@ViewData["UnreadNotificationCount"]</span>
+                                    }
+                                    <span class="tooltip-text">Xem thông báo</span>
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2"></i> Bảng điều khiển Admin<span class="tooltip-text">Bảng điều khiển</span></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Admin" asp-controller="UserManagement" asp-action="Index"><i class="bi bi-people"></i> Quản lý tài khoản<span class="tooltip-text">Quản lý người dùng</span></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Admin" asp-controller="OrganizerRequest" asp-action="Index"><i class="bi bi-person-plus"></i> Yêu cầu Organizer<span class="tooltip-text">Xem yêu cầu</span></a>
+                            </li>
+                        }
+                        @if (!User.IsInRole("Organizer") && !User.IsInRole("Admin") && User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="RequestOrganizer"><i class="bi bi-person-plus"></i> Trở thành Organizer<span class="tooltip-text">Yêu cầu Organizer</span></a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Guest"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Guest" asp-controller="Registration" asp-action="MyRegistrations"><i class="bi bi-person-check"></i> Đăng ký của tôi<span class="tooltip-text">Xem đăng ký</span></a>
+                            </li>
+                        }
+                    </ul>
+                    <partial name="_LoginPartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            © 2025 - QuickEvent - <a asp-area="" asp-controller="Home" asp-action="Privacy">Chính sách bảo mật<span class="tooltip-text">Xem chính sách bảo mật</span></a>
+        </div>
+    </footer>
+    <!-- Đặt jQuery lên đầu tiên -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Sau đó là các plugin của jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
+    <!-- Cuối cùng là Bootstrap và các script khác -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

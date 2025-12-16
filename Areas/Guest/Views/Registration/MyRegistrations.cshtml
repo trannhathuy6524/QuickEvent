@@ -1,0 +1,139 @@
+﻿@model IEnumerable<QuickEvent.Models.Registration>
+
+<style>
+    .table {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .table th {
+            background-color: #F7F7F7;
+            color: #222222;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+        .table td {
+            color: #222222;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+            .table td a, .btn-custom, .btn-secondary {
+                border: 1px solid #222222;
+                background-color: transparent;
+                padding: 6px 12px;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                font-size: 12px;
+                line-height: 1;
+                transition: border-color 0.3s;
+                transform: scale(1.1);
+                margin-right: 8px;
+                color: #222222;
+                text-decoration: none;
+            }
+
+                .table td a i, .btn-custom i, .btn-secondary i {
+                    color: #222222;
+                    font-size: 16px;
+                }
+
+                .table td a:hover, .btn-custom:hover, .btn-secondary:hover {
+                    border-color: #FF385C;
+                }
+
+                    .table td a:hover i, .btn-custom:hover i, .btn-secondary:hover i {
+                        color: #FF385C;
+                    }
+
+                .table td a .tooltip-text, .btn-custom .tooltip-text, .btn-secondary .tooltip-text {
+                    visibility: hidden;
+                    background-color: #222222;
+                    color: #FFFFFF;
+                    text-align: center;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                    position: absolute;
+                    z-index: 1;
+                    bottom: -40px;
+                    font-size: 12px;
+                    white-space: nowrap;
+                }
+
+                .table td a:hover .tooltip-text, .btn-custom:hover .tooltip-text, .btn-secondary:hover .tooltip-text {
+                    visibility: visible;
+                }
+
+    .text-success, .text-danger {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Các sự kiện đã đăng ký</h2>
+
+@if (TempData["Message"] != null)
+{
+    <p class="text-success"><i class="bi bi-check-circle"></i> @TempData["Message"]</p>
+}
+@if (TempData["Error"] != null)
+{
+    <p class="text-danger"><i class="bi bi-exclamation-circle"></i> @TempData["Error"]</p>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Sự kiện</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Số điện thoại</th>
+            <th>Ngày đăng ký</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var registration in Model.Where(r => r.CancellationDate == null))
+        {
+            <tr>
+                <td>@registration.Event.Title</td>
+                <td>@registration.FullName</td>
+                <td>@registration.Email</td>
+                <td>@registration.PhoneNumber</td>
+                <td>@registration.RegistrationDate.ToString("g")</td>
+                <td>
+                    @{
+                        var now = DateTime.Now;
+                        var canEdit = registration.Event.StartDate > now && (registration.RegistrationDate.AddHours(24) > now);
+                        var canCancel = registration.Event.StartDate > now;
+                    }
+                    <a asp-controller="Event" asp-action="DownloadIcs" asp-route-id="@registration.Event.Id" class="btn btn-custom btn-sm"><i class="bi bi-calendar-plus"></i><span class="tooltip-text">Thêm vào Lịch</span></a>
+                    @if (canEdit)
+                    {
+                        <a asp-action="Edit" asp-route-registrationId="@registration.Id"><i class="bi bi-pencil"></i><span class="tooltip-text">Chỉnh sửa</span></a>
+                    }
+                    @if (canCancel)
+                    {
+                        <a asp-action="Cancel" asp-route-registrationId="@registration.Id"><i class="bi bi-x-circle"></i><span class="tooltip-text">Hủy</span></a>
+                    }
+                    @if (canCancel)
+                    {
+                        <a asp-action="Success" asp-route-registrationId="@registration.Id" class="btn btn-custom btn-sm">
+                            <i class="bi bi-qr-code"></i>
+                            <span class="tooltip-text">Xem mã QR Check-in</span>
+                        </a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-secondary"><i class="bi bi-house"></i><span class="tooltip-text">Quay lại trang chủ</span></a>

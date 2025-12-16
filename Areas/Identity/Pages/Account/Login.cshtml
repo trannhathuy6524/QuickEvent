@@ -1,0 +1,214 @@
+﻿@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<style>
+    .login-container, .external-login-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .form-floating label, .checkbox label {
+        color: #FF385C;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .form-control {
+        border: 1px solid #222222;
+        border-radius: 8px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        padding: 12px;
+    }
+
+    .btn-custom {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 8px 16px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        color: #222222;
+        font-family: Arial, Helvetica, sans-serif;
+        width: 100%;
+    }
+
+        .btn-custom i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .btn-custom:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .login-container a {
+        color: #222222;
+        text-decoration: none;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        margin-right: 8px;
+    }
+
+        .login-container a i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 4px;
+        }
+
+        .login-container a:hover {
+            color: #FF385C;
+        }
+
+            .login-container a:hover i {
+                color: #FF385C;
+            }
+
+        .login-container a .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .login-container a:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .text-danger {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+<h1 style="font-family: Arial, Helvetica, sans-serif; color: #FF385C; font-weight: 600; font-size: 32px; margin-bottom: 24px;">Đăng nhập</h1>
+<div class="row">
+    <div class="col-md-4">
+        <section>
+            <form id="account" method="post" class="login-container">
+                <h2 style="font-family: Arial, Helvetica, sans-serif; color: #FF385C; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Sử dụng tài khoản cục bộ để đăng nhập</h2>
+                <hr />
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <label asp-for="Input.Email" class="form-label">Email</label>
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Mật khẩu" />
+                    <label asp-for="Input.Password" class="form-label">Mật khẩu</label>
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                <div class="checkbox mb-3">
+                    <label asp-for="Input.RememberMe" class="form-label">
+                        <input class="form-check-input" asp-for="Input.RememberMe" />
+                        Ghi nhớ đăng nhập
+                    </label>
+                </div>
+                <div>
+                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-custom"><i class="bi bi-box-arrow-in-right"></i> Đăng nhập<span class="tooltip-text">Đăng nhập vào tài khoản</span></button>
+                </div>
+                <div>
+                    <p>
+                        <a id="forgot-password" asp-page="./ForgotPassword"><i class="bi bi-key"></i> Quên mật khẩu?<span class="tooltip-text">Đặt lại mật khẩu</span></a>
+                    </p>
+                    <p>
+                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl"><i class="bi bi-person-plus"></i> Đăng ký tài khoản mới<span class="tooltip-text">Tạo tài khoản mới</span></a>
+                    </p>
+                    <p>
+                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation"><i class="bi bi-envelope"></i> Gửi lại email xác nhận<span class="tooltip-text">Gửi lại email xác nhận</span></a>
+                    </p>
+                </div>
+            </form>
+        </section>
+    </div>
+    <div class="col-md-6 col-md-offset-2">
+        <section class="external-login-container">
+            <h3 style="font-family: Arial, Helvetica, sans-serif; color: #FF385C; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Sử dụng dịch vụ khác để đăng nhập</h3>
+            <hr />
+            @{
+                if ((Model.ExternalLogins?.Count ?? 0) == 0)
+                {
+                    <div>
+                        <p>
+                            Hiện không có dịch vụ xác thực bên ngoài nào được cấu hình. Xem <a href="https://go.microsoft.com/fwlink/?LinkID=532715">
+                                bài viết
+                                về cách thiết lập ứng dụng ASP.NET để hỗ trợ đăng nhập qua dịch vụ bên ngoài
+                            </a>.
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
+                        <div>
+                            <p>
+                                @foreach (var provider in Model.ExternalLogins!)
+                                {
+                                    <button type="submit" class="btn btn-custom" name="provider" value="@provider.Name" title="Đăng nhập bằng tài khoản @provider.DisplayName"><i class="bi bi-globe"></i> @provider.DisplayName<span class="tooltip-text">Đăng nhập với @provider.DisplayName</span></button>
+                                }
+                            </p>
+                        </div>
+                    </form>
+                }
+            }
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.btn-custom').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+            });
+        });
+    </script>
+}

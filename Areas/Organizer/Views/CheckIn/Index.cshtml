@@ -1,0 +1,261 @@
+﻿@model IEnumerable<QuickEvent.Models.Registration>
+
+<style>
+    .checkin-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 800px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .scanner-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #F7F7F7;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    #reader {
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    #result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .result-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .result-error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .check-in-info {
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+        .check-in-info span {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+    .table {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+        .table th {
+            background-color: #F7F7F7;
+            color: #222222;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+        .table td {
+            color: #222222;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+    .btn-custom, .btn-secondary, .btn-disabled {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        margin-right: 8px;
+    }
+
+        .btn-custom i, .btn-secondary i, .btn-disabled i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-custom:hover, .btn-secondary:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i, .btn-secondary:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text, .btn-secondary .tooltip-text, .btn-disabled .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text, .btn-secondary:hover .tooltip-text, .btn-disabled:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .btn-disabled {
+        border: 1px solid #cccccc;
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+        pointer-events: auto; /* Cho phép hover để hiển thị tooltip */
+    }
+
+        .btn-disabled i {
+            color: #999999;
+        }
+
+    .text-success, .text-muted, .text-danger {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Check-in sự kiện - @ViewBag.EventId</h2>
+<div class="checkin-container">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Trạng thái</th>
+                <th>Check-in</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reg in Model)
+            {
+                var isDisabled = reg.CancellationDate != null || (ViewBag.CheckInStatus != null && ViewBag.CheckInStatus.ContainsKey(reg.Id) && ViewBag.CheckInStatus[reg.Id]);
+                <tr>
+                    <td>@reg.FullName</td>
+                    <td>@reg.Email</td>
+                    <td>
+                        @if (reg.CancellationDate != null)
+                        {
+                            <span class="text-danger"><i class="bi bi-x-circle"></i> Đã hủy</span>
+                        }
+                        else if (ViewBag.CheckInStatus != null && ViewBag.CheckInStatus.ContainsKey(reg.Id) && ViewBag.CheckInStatus[reg.Id])
+                        {
+                            <span class="text-success"><i class="bi bi-check-circle"></i> Check-in thành công</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted"><i class="bi bi-circle"></i> Chưa check-in</span>
+                        }
+                    </td>
+                    <td>
+                        <form asp-action="CheckIn" method="post">
+                            <input type="hidden" name="registrationId" value="@reg.Id" />
+                            <input type="hidden" name="eventId" value="@ViewBag.EventId" />
+                            <button type="submit" class="btn @(isDisabled ? "btn-disabled" : "btn-custom") btn-sm" @(isDisabled ? "disabled" : "")>
+                                <i class="bi bi-person-check"></i>
+                                <span class="tooltip-text">Check-in</span>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a asp-controller="Event" asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i><span class="tooltip-text">Quay lại</span></a>
+</div>
+
+@* <div class="scanner-container">
+    <h2 style="font-family: Arial, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">
+        <i class="bi bi-qr-code-scan"></i> Check-in Sự kiện
+    </h2>
+
+    <div id="reader"></div>
+    <div id="result"></div>
+</div> *@
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @* <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        $(document).ready(function() {
+            function onScanSuccess(decodedText) {
+                $.ajax({
+                    url: '/Organizer/CheckIn/ProcessQRCode',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(decodedText),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(data) {
+                        const resultDiv = $('#result');
+                        resultDiv.show();
+
+                        if (data.success) {
+                            resultDiv.removeClass('result-error').addClass('result-success');
+                            resultDiv.html(`
+                                <h4><i class="bi bi-check-circle"></i> ${data.message}</h4>
+                                <div class="check-in-info">
+                                    <span><strong>Họ tên:</strong> ${data.data.name}</span>
+                                    <span><strong>Email:</strong> ${data.data.email}</span>
+                                    <span><strong>Thời gian check-in:</strong> ${data.data.checkInTime}</span>
+                                </div>`);
+                        } else {
+                            resultDiv.removeClass('result-success').addClass('result-error');
+                            resultDiv.html(`<h4><i class="bi bi-x-circle"></i> ${data.message}</h4>`);
+                        }
+
+                        setTimeout(() => {
+                            resultDiv.fadeOut();
+                        }, 5000);
+                    },
+                    error: function() {
+                        const resultDiv = $('#result');
+                        resultDiv.show()
+                            .removeClass('result-success')
+                            .addClass('result-error')
+                            .html('<h4><i class="bi bi-x-circle"></i> Lỗi khi xử lý check-in</h4>');
+                    }
+                });
+            }
+
+            const html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render(onScanSuccess);
+        });
+    </script> *@
+
+    <script>
+        document.querySelectorAll('.btn-custom, .btn-secondary, .btn-disabled').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+            });
+        });
+    </script>
+}

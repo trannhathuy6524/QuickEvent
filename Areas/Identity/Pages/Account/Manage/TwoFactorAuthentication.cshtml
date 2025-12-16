@@ -1,0 +1,164 @@
+﻿@page
+@using Microsoft.AspNetCore.Http.Features
+@model TwoFactorAuthenticationModel
+@{
+    ViewData["Title"] = "Xác thực hai yếu tố (2FA)";
+    ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication;
+}
+
+<style>
+    .twofa-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .twofa-container h4 {
+            color: #FF385C;
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+    .btn-custom {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 8px 16px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        color: #222222;
+        font-family: Arial, Helvetica, sans-serif;
+        margin-right: 8px;
+    }
+
+        .btn-custom i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .btn-custom:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .alert {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+    }
+
+        .alert a {
+            color: #222222;
+            text-decoration: none;
+        }
+
+            .alert a:hover {
+                color: #FF385C;
+            }
+</style>
+
+<partial name="_StatusMessage" for="StatusMessage" />
+<h3 style="font-family: Arial, Helvetica, sans-serif; color: #FF385C; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Xác thực hai yếu tố (2FA)</h3>
+<div class="twofa-container">
+    @{
+        var consentFeature = HttpContext.Features.Get<ITrackingConsentFeature>();
+        @if (consentFeature?.CanTrack ?? true)
+        {
+            @if (Model.Is2faEnabled)
+            {
+                if (Model.RecoveryCodesLeft == 0)
+                {
+                    <div class="alert alert-danger">
+                        <strong>Bạn không còn mã khôi phục nào.</strong>
+                        <p>Bạn phải <a asp-page="./GenerateRecoveryCodes">tạo một bộ mã khôi phục mới</a> trước khi có thể đăng nhập bằng mã khôi phục.</p>
+                    </div>
+                }
+                else if (Model.RecoveryCodesLeft == 1)
+                {
+                    <div class="alert alert-danger">
+                        <strong>Bạn còn 1 mã khôi phục.</strong>
+                        <p>Bạn có thể <a asp-page="./GenerateRecoveryCodes">tạo một bộ mã khôi phục mới</a>.</p>
+                    </div>
+                }
+                else if (Model.RecoveryCodesLeft <= 3)
+                {
+                    <div class="alert alert-warning">
+                        <strong>Bạn còn @Model.RecoveryCodesLeft mã khôi phục.</strong>
+                        <p>Bạn nên <a asp-page="./GenerateRecoveryCodes">tạo một bộ mã khôi phục mới</a>.</p>
+                    </div>
+                }
+
+                if (Model.IsMachineRemembered)
+                {
+                    <form method="post" style="display: inline-block">
+                        <button type="submit" class="btn btn-custom"><i class="bi bi-x-circle"></i> Quên trình duyệt này<span class="tooltip-text">Quên trình duyệt đã lưu</span></button>
+                    </form>
+                }
+                <a asp-page="./Disable2fa" class="btn btn-custom"><i class="bi bi-shield-x"></i> Tắt 2FA<span class="tooltip-text">Tắt xác thực hai yếu tố</span></a>
+                <a asp-page="./GenerateRecoveryCodes" class="btn btn-custom"><i class="bi bi-arrow-repeat"></i> Đặt lại mã khôi phục<span class="tooltip-text">Tạo mã khôi phục mới</span></a>
+            }
+
+            <h4>Ứng dụng xác thực</h4>
+            @if (!Model.HasAuthenticator)
+            {
+                <a id="enable-authenticator" asp-page="./EnableAuthenticator" class="btn btn-custom"><i class="bi bi-phone"></i> Thêm ứng dụng xác thực<span class="tooltip-text">Thêm ứng dụng xác thực</span></a>
+            }
+            else
+            {
+                <a id="enable-authenticator" asp-page="./EnableAuthenticator" class="btn btn-custom"><i class="bi bi-phone"></i> Thiết lập ứng dụng xác thực<span class="tooltip-text">Thiết lập lại ứng dụng xác thực</span></a>
+                <a id="reset-authenticator" asp-page="./ResetAuthenticator" class="btn btn-custom"><i class="bi bi-arrow-repeat"></i> Đặt lại ứng dụng xác thực<span class="tooltip-text">Đặt lại ứng dụng xác thực</span></a>
+            }
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                <strong>Chính sách bảo mật và cookie chưa được chấp nhận.</strong>
+                <p>Bạn phải chấp nhận chính sách trước khi bật xác thực hai yếu tố.</p>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.btn-custom').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+            });
+        });
+    </script>
+}

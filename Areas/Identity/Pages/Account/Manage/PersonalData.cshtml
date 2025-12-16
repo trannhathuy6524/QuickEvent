@@ -1,0 +1,106 @@
+﻿@page
+@model PersonalDataModel
+@{
+    ViewData["Title"] = "Dữ liệu cá nhân";
+    ViewData["ActivePage"] = ManageNavPages.PersonalData;
+}
+
+<style>
+    .personal-data-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .personal-data-container p {
+            font-size: 16px;
+            color: #222222;
+            margin-bottom: 16px;
+        }
+
+        .personal-data-container strong {
+            color: #FF385C;
+            font-weight: 600;
+        }
+
+    .btn-custom, .btn-danger {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 8px 16px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        color: #222222;
+        font-family: Arial, Helvetica, sans-serif;
+        margin-right: 8px;
+    }
+
+        .btn-custom i, .btn-danger i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .btn-custom:hover, .btn-danger:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i, .btn-danger:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text, .btn-danger .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text, .btn-danger:hover .tooltip-text {
+            visibility: visible;
+        }
+</style>
+
+<h3 style="font-family: Arial, Helvetica, sans-serif; color: #FF385C; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Dữ liệu cá nhân</h3>
+<div class="row">
+    <div class="col-md-6">
+        <div class="personal-data-container">
+            <p>Tài khoản của bạn chứa dữ liệu cá nhân mà bạn đã cung cấp. Trang này cho phép bạn tải xuống hoặc xóa dữ liệu đó.</p>
+            <p><strong>Việc xóa dữ liệu này sẽ xóa vĩnh viễn tài khoản của bạn và không thể khôi phục.</strong></p>
+            <form id="download-data" asp-page="DownloadPersonalData" method="post">
+                <button class="btn btn-custom" type="submit"><i class="bi bi-download"></i> Tải xuống<span class="tooltip-text">Tải dữ liệu cá nhân</span></button>
+            </form>
+            <p>
+                <a id="delete" asp-page="DeletePersonalData" class="btn btn-danger"><i class="bi bi-trash"></i> Xóa<span class="tooltip-text">Xóa tài khoản vĩnh viễn</span></a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelector('#delete').addEventListener('click', (e) => {
+            if (!confirm('Bạn chắc chắn muốn xóa tài khoản? Hành động này không thể khôi phục.')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+}

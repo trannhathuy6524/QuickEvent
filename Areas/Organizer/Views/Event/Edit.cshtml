@@ -1,0 +1,182 @@
+﻿@model QuickEvent.Areas.Organizer.Models.EventEditViewModel
+
+<style>
+    .edit-form {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .edit-form label {
+            color: #FF385C;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+    .form-control {
+        border: 1px solid #717171;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 14px;
+        color: #222222;
+    }
+
+    .btn-custom, .btn-secondary {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        margin-right: 8px;
+    }
+
+        .btn-custom i, .btn-secondary i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-custom:hover, .btn-secondary:hover {
+            border-color: #FF4500;
+        }
+
+            .btn-custom:hover i, .btn-secondary:hover i {
+                color: #FF4500;
+            }
+
+        .btn-custom .tooltip-text, .btn-secondary .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text, .btn-secondary:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .text-danger, .validation-error {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .validation-error {
+        color: #FF385C;
+        margin-bottom: 16px;
+    }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; font-weight: bold; color: #222222; font-size: 24px; margin-bottom: 24px;">
+    Chỉnh sửa sự kiện - @Model.Title
+</h2>
+
+@if (TempData["Error"] != null)
+{
+    <p class="text-danger"><i class="bi bi-exclamation-circle"></i> @TempData["Error"]</p>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="validation-error">
+        <i class="bi bi-exclamation-circle"></i> Vui lòng kiểm tra các lỗi sau:
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form asp-area="Organizer" asp-controller="Event" asp-action="Edit" method="post" class="edit-form">
+    <input type="hidden" asp-for="Id" />
+    <div class="form-group">
+        <label asp-for="Title">Tên sự kiện</label>
+        <input asp-for="Title" class="form-control" required />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="StartDate">Ngày bắt đầu</label>
+        <input asp-for="StartDate" class="form-control" type="datetime-local" required />
+        <span asp-validation-for="StartDate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="EndDate">Ngày kết thúc</label>
+        <input asp-for="EndDate" class="form-control" type="datetime-local" />
+        <span asp-validation-for="EndDate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Description">Mô tả</label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+    </div>
+    <div class="form-group">
+        <label asp-for="Location">Địa điểm</label>
+        <input asp-for="Location" class="form-control" required />
+        <span asp-validation-for="Location" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="MaxAttendees">Số người tham gia tối đa</label>
+        <input asp-for="MaxAttendees" class="form-control" type="number" min="1" required />
+        <span asp-validation-for="MaxAttendees" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="IsPublic">Công khai</label>
+        <input asp-for="IsPublic" type="checkbox" />
+    </div>
+    <div class="form-group">
+        <label asp-for="IsRegistrationOpen">Mở đăng ký</label>
+        <input asp-for="IsRegistrationOpen" type="checkbox" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Status">Trạng thái</label>
+        <input asp-for="Status" class="form-control" required />
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-custom"><i class="bi bi-save"></i><span class="tooltip-text">Lưu thay đổi</span></button>
+    <a asp-area="Organizer" asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i><span class="tooltip-text">Quay lại</span></a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery is not loaded. Validation may not work.');
+        }
+
+        document.querySelector('.btn-custom').addEventListener('click', function() {
+            this.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => this.classList.remove('animate__animated', 'animate__pulse'), 500);
+        });
+
+        $(document).ready(function() {
+            $("form.edit-form").validate({
+                errorClass: "text-danger",
+                validClass: "text-success",
+                highlight: function(element) {
+                    $(element).addClass("border-danger").removeClass("border-success");
+                },
+                unhighlight: function(element) {
+                    $(element).removeClass("border-danger").addClass("border-success");
+                }
+            });
+        });
+    </script>
+}

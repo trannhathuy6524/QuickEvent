@@ -1,0 +1,107 @@
+﻿<style>
+    .request-organizer-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        max-width: 1000px;
+        margin: 24px auto;
+        font-family: Arial, sans-serif;
+    }
+
+        .request-organizer-container label {
+            color: #FF385C;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+    .form-control {
+        border: 1px solid #222222;
+        border-radius: 5px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    .btn-custom, .btn-secondary {
+        border: 1px solid #222222;
+        background-color: transparent;
+        color: #222222;
+        padding: 8px 16px;
+        border-radius: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 14px;
+        transition: border-color 0.3s, color 0.3s;
+        transform: scale(1.1);
+        font-family: Arial, sans-serif;
+        margin-right: 8px;
+    }
+
+        .btn-custom i, .btn-secondary i {
+            color: #222222;
+            font-size: 16px;
+            margin-right: 4px;
+        }
+
+        .btn-custom:hover, .btn-secondary:hover {
+            border-color: #FF385C;
+            color: #FF385C;
+        }
+
+            .btn-custom:hover i, .btn-secondary:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text, .btn-secondary .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text, .btn-secondary:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .text-success {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+<h2 style="font-family: Arial, sans-serif; color: #FF385C; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Yêu cầu trở thành Organizer</h2>
+<div class="request-organizer-container">
+    <form asp-action="RequestOrganizer" method="post">
+        <div class="form-group">
+            <label for="reason">Tại sao bạn muốn trở thành Organizer?</label>
+            <textarea name="reason" class="form-control" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-custom"><i class="bi bi-send"></i> Gửi yêu cầu<span class="tooltip-text">Gửi yêu cầu Organizer</span></button>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Hủy<span class="tooltip-text">Hủy yêu cầu</span></a>
+    </form>
+    @if (TempData["Message"] != null)
+    {
+        <p class="text-success"><i class="bi bi-check-circle"></i> @TempData["Message"]</p>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelector('.request-organizer-container').addEventListener('submit', () => {
+            const btn = document.querySelector('.btn-custom');
+            btn.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+        });
+    </script>
+}

@@ -1,0 +1,107 @@
+﻿@model QuickEvent.Areas.Organizer.Models.RegistrationViewModel
+
+<style>
+    .registration-details-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+        .registration-details-container div {
+            margin-bottom: 16px;
+            font-size: 16px;
+            color: #222222;
+            line-height: 1.5;
+        }
+
+        .registration-details-container strong {
+            color: #FF385C;
+            font-weight: 600;
+        }
+
+    .btn-secondary {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        margin-right: 8px;
+    }
+
+        .btn-secondary i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-secondary:hover i {
+                color: #FF385C;
+            }
+
+        .btn-secondary .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-secondary:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .status-cancelled {
+        color: #FF0000; /* Màu đỏ cho trạng thái Hủy */
+        font-weight: 600;
+    }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Chi tiết người đăng ký</h2>
+<div class="registration-details-container">
+    <div><strong>Sự kiện:</strong> @Model.EventTitle</div>
+    <div><strong>Họ và tên:</strong> @Model.FullName</div>
+    <div><strong>Email:</strong> @Model.Email</div>
+    <div><strong>Số điện thoại:</strong> @Model.PhoneNumber</div>
+    <div><strong>Thông tin bổ sung:</strong> @(Model.AdditionalInfo ?? "N/A")</div>
+    <div><strong>Ngày đăng ký:</strong> @Model.RegistrationDate.ToString("dd/MM/yyyy HH:mm")</div>
+    <div>
+        <strong>Trạng thái:</strong>
+        @if (Model.CancellationDate == null)
+        {
+            <span>Tham gia</span>
+        }
+        else
+        {
+            <span class="status-cancelled">Hủy</span>
+        }
+    </div>
+    <a asp-controller="Registration" asp-action="Index" asp-route-eventId="@ViewBag.EventId" class="btn btn-secondary"><i class="bi bi-arrow-left"></i><span class="tooltip-text">Quay lại danh sách đăng ký</span></a>
+</div>
+
+<script>
+    document.querySelector('.btn-secondary').addEventListener('click', () => {
+        const btn = document.querySelector('.btn-secondary');
+        btn.classList.add('animate__animated', 'animate__pulse');
+        setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+    });
+</script>

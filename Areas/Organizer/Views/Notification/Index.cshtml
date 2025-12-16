@@ -1,0 +1,141 @@
+﻿@model IEnumerable<QuickEvent.Areas.Organizer.Models.NotificationViewModel>
+
+<style>
+    .notification-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 1000px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .table th {
+        background-color: #F7F7F7;
+        color: #222222;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    .table td {
+        color: #222222;
+        font-size: 14px;
+        padding: 12px;
+        vertical-align: top; /* Đảm bảo căn chỉnh dọc */
+    }
+
+    .table .notification-details div {
+        margin-bottom: 8px; /* Khoảng cách giữa các hàng */
+    }
+
+    .btn-custom, .btn-secondary {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+        margin-right: 8px;
+    }
+
+        .btn-custom i, .btn-secondary i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-custom:hover, .btn-secondary:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i, .btn-secondary:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text, .btn-secondary .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text, .btn-secondary:hover .tooltip-text {
+            visibility: visible;
+        }
+
+    .text-success, .text-danger {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Thông báo</h2>
+<div class="notification-container">
+    @if (TempData["Message"] != null)
+    {
+        <p class="text-success"><i class="bi bi-check-circle"></i> @TempData["Message"]</p>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <p class="text-danger"><i class="bi bi-exclamation-circle"></i> @TempData["Error"]</p>
+    }
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Thông báo</th>
+                <th>Thời gian</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var notification in Model)
+            {
+                <tr>
+                    <td class="notification-details">
+                        @if (!string.IsNullOrEmpty(notification.EventTitle))
+                        {
+                            <div><strong>Tên sự kiện:</strong> @notification.EventTitle</div>
+                        }
+                        <div><strong>Nội dung:</strong> @notification.Message</div>
+                    </td>
+                    <td>@notification.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@(notification.IsRead ? "Đã đọc" : "Chưa đọc")</td>
+                    <td>
+                        @if (!notification.IsRead)
+                        {
+                            <form asp-action="MarkAsRead" method="post">
+                                <input type="hidden" name="notificationId" value="@notification.Id" />
+                                <button type="submit" class="btn btn-custom btn-sm"><i class="bi bi-check-circle"></i><span class="tooltip-text">Đánh dấu đã đọc</span></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-secondary"><i class="bi bi-house"></i><span class="tooltip-text">Quay lại trang chủ</span></a>
+</div>
+
+<script>
+    document.querySelectorAll('.btn-custom, .btn-secondary').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
+        });
+    });
+</script>

@@ -1,0 +1,97 @@
+﻿@model QuickEvent.Models.Event
+
+<style>
+    .details-container {
+        background-color: #F7F7F7;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        max-width: 800px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .details-item {
+        margin-bottom: 16px;
+        font-size: 16px;
+        color: #222222;
+        line-height: 1.5;
+    }
+
+        .details-item strong {
+            color: #FF385C;
+            font-weight: 600;
+        }
+
+    .btn-custom {
+        border: 1px solid #222222;
+        background-color: transparent;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 12px;
+        line-height: 1;
+        transition: border-color 0.3s;
+        transform: scale(1.1);
+    }
+
+        .btn-custom i {
+            color: #222222;
+            font-size: 16px;
+        }
+
+        .btn-custom:hover {
+            border-color: #FF385C;
+        }
+
+            .btn-custom:hover i {
+                color: #FF385C;
+            }
+
+        .btn-custom .tooltip-text {
+            visibility: hidden;
+            background-color: #222222;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: -40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-custom:hover .tooltip-text {
+            visibility: visible;
+        }
+</style>
+
+<h2 style="font-family: Arial, Helvetica, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">Chi tiết Sự kiện</h2>
+<div class="details-container">
+    <div class="details-item">
+        <strong>Tiêu đề:</strong> @Model.Title
+    </div>
+    <div class="details-item">
+        <strong>Ngày bắt đầu:</strong> @Model.StartDate.ToString("g")
+    </div>
+    <div class="details-item">
+        <strong>Ngày kết thúc:</strong> @Model.EndDate?.ToString("g")
+    </div>
+    <div class="details-item">
+        <strong>Mô tả:</strong> @Model.Description
+    </div>
+    <div class="details-item">
+        <strong>Địa điểm:</strong> @Model.Location
+    </div>
+    <div class="details-item">
+        <strong>Số lượng tối đa:</strong> @Model.MaxAttendees
+    </div>
+    <div class="details-item">
+        <strong>Trạng thái:</strong> @Model.Status
+    </div>
+    <a asp-action="Index" class="btn btn-custom"><i class="bi bi-arrow-left"></i><span class="tooltip-text">Quay lại Danh sách</span></a>
+</div>

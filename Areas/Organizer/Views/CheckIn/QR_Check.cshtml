@@ -1,0 +1,176 @@
+﻿<style>
+    .scanner-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #F7F7F7;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #reader {
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    #result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .result-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .result-error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .check-in-info {
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+        .check-in-info span {
+            display: block;
+            margin-bottom: 5px;
+        }
+</style>
+
+<div class="scanner-container">
+    <h2 style="font-family: Arial, sans-serif; color: #222222; font-weight: 600; font-size: 24px; margin-bottom: 24px;">
+        <i class="bi bi-qr-code-scan"></i> Check-in Sự kiện
+    </h2>
+
+    <div id="reader"></div>
+    <div id="result"></div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        $(document).ready(function() {
+            // Biến để theo dõi thời gian quét cuối cùng
+            let lastScanTime = 0;
+            // Thời gian nghỉ giữa các lần quét (3 giây)
+            const SCAN_COOLDOWN = 3000;
+            // Biến để kiểm soát trạng thái đang xử lý
+            let isProcessing = false;
+
+            function onScanSuccess(decodedText) {
+                // Kiểm tra thời gian nghỉ
+                const currentTime = Date.now();
+                if (currentTime - lastScanTime < SCAN_COOLDOWN || isProcessing) {
+                    return; // Bỏ qua nếu chưa đủ thời gian nghỉ hoặc đang xử lý
+                }
+
+                // Cập nhật thời gian quét cuối và đánh dấu đang xử lý
+                lastScanTime = currentTime;
+                isProcessing = true;
+
+                // Hiển thị trạng thái đang xử lý
+                const resultDiv = $('#result');
+                resultDiv.show()
+                    .removeClass('result-success result-error')
+                    .addClass('result-processing')
+                    .html('<h4><i class="bi bi-hourglass-split"></i> Đang xử lý...</h4>');
+
+                $.ajax({
+                    url: '/Organizer/CheckIn/ProcessQRCode',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(decodedText),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(data) {
+                        resultDiv.show();
+
+                        if (data.success) {
+                            resultDiv.removeClass('result-error result-processing')
+                                   .addClass('result-success');
+                            resultDiv.html(`
+                                <h4><i class="bi bi-check-circle"></i> ${data.message}</h4>
+                                <div class="check-in-info">
+                                    <span><strong>Họ tên:</strong> ${data.data.name}</span>
+                                    <span><strong>Email:</strong> ${data.data.email}</span>
+                                    <span><strong>Thời gian check-in:</strong> ${data.data.checkInTime}</span>
+                                </div>`);
+
+                            // Phát âm thanh thành công
+                            playSound(true);
+                        } else {
+                            resultDiv.removeClass('result-success result-processing')
+                                   .addClass('result-error');
+                            resultDiv.html(`<h4><i class="bi bi-x-circle"></i> ${data.message}</h4>`);
+
+                            // Phát âm thanh thất bại
+                            playSound(false);
+                        }
+
+                        // Ẩn kết quả sau 5 giây
+                        setTimeout(() => {
+                            resultDiv.fadeOut();
+                        }, 5000);
+                    },
+                    error: function() {
+                        resultDiv.show()
+                            .removeClass('result-success result-processing')
+                            .addClass('result-error')
+                            .html('<h4><i class="bi bi-x-circle"></i> Lỗi khi xử lý check-in</h4>');
+
+                        // Phát âm thanh thất bại
+                        playSound(false);
+                    },
+                    complete: function() {
+                        // Đánh dấu đã xử lý xong
+                        isProcessing = false;
+                    }
+                });
+            }
+
+            // Hàm phát âm thanh
+            function playSound(success) {
+                const audio = new Audio(success ? '/sounds/success.mp3' : '/sounds/error.mp3');
+                audio.play().catch(e => console.log('Không thể phát âm thanh:', e));
+            }
+
+            // Khởi tạo scanner với fps thấp hơn để giảm tải
+            const html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                {
+                    fps: 5, // Giảm FPS xuống 5
+                    qrbox: 250,
+                    rememberLastUsedCamera: true
+                }
+            );
+            html5QrcodeScanner.render(onScanSuccess);
+
+            // Thêm CSS cho trạng thái đang xử lý
+            $('<style>')
+                .text(`
+                    .result-processing {
+                        background-color: #e2e3e5;
+                        border-color: #d6d8db;
+                        color: #383d41;
+                    }
+                    .result-processing i {
+                        animation: spin 2s linear infinite;
+                    }
+                    @@keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `)
+                .appendTo('head');
+        });
+    </script>
+}

@@ -1,0 +1,39 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <a id="manage" class="nav-link no-border" asp-area="Identity" asp-page="/Account/Manage/Index" title="Quản lý">
+            <i class="bi bi-person"></i> Xin chào @UserManager.GetUserName(User)!
+            <span class="tooltip-text">Quản lý tài khoản</span>
+        </a>
+        <li class="nav-item">
+            <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button id="logout" type="submit" class="nav-link btn btn-link border-0"><i class="bi bi-box-arrow-right"></i> Đăng xuất<span class="tooltip-text">Đăng xuất</span></button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" id="register" asp-area="Identity" asp-page="/Account/Register"><i class="bi bi-person-plus"></i> Đăng ký<span class="tooltip-text">Tạo tài khoản mới</span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="login" asp-area="Identity" asp-page="/Account/Login"><i class="bi bi-box-arrow-in-right"></i> Đăng nhập<span class="tooltip-text">Đăng nhập</span></a>
+        </li>
+    }
+</ul>
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+<script>
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            link.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => link.classList.remove('animate__animated', 'animate__pulse'), 500);
+        });
+    });
+</script>
