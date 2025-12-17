@@ -57,7 +57,9 @@ namespace QuickEvent.Repositories
 
         public async Task<List<Event>> SearchEventsAsync(string query, bool onlyPublic)
         {
-            var events = _context.Events.AsQueryable();
+            var events = _context.Events
+                .Include(e => e.Registrations) // Include registrations để count chính xác
+                .AsQueryable();
             if (!string.IsNullOrEmpty(query))
             {
                 events = events.Where(e => e.Title.Contains(query) || e.Description.Contains(query));
