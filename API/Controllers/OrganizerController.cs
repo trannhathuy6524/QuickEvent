@@ -1,15 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuickEvent.Data;
 using QuickEvent.Models;
 using QuickEvent.Repositories;
 using QuickEvent.Repositories.Interfaces;
+using QuickEvent.Services;
 
 namespace QuickEvent.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Organizer")]
     public class OrganizerController : ControllerBase
     {
         private readonly IEventRepository _eventRepository;
@@ -17,23 +20,27 @@ namespace QuickEvent.API.Controllers
         private readonly INotificationRepository _notificationRepository;
         private readonly ICheckInRepository _checkInRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
 
         public OrganizerController(
             IEventRepository eventRepository,
             IRegistrationRepository registrationRepository,
             INotificationRepository notificationRepository,
             ICheckInRepository checkInRepository,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context)
         {
             _eventRepository = eventRepository;
             _registrationRepository = registrationRepository;
             _notificationRepository = notificationRepository;
             _checkInRepository = checkInRepository;
             _userManager = userManager;
+            _context = context;
         }
 
         // GET: api/organizer/events
         [HttpGet("events")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult<IEnumerable<object>>> GetMyEvents()
         {
             try
@@ -63,7 +70,7 @@ namespace QuickEvent.API.Controllers
                         e.IsRegistrationOpen,
                         e.Status,
                         e.IsCancelled,
-                        CurrentRegistrations = e.Registrations?.Count ?? 0,
+                        CurrentRegistrations = e.Registrations?.Count(r => r.CancellationDate == null) ?? 0,
                         CheckedInCount = checkIns.Count
                     });
                 }
@@ -78,15 +85,23 @@ namespace QuickEvent.API.Controllers
 
         // POST: api/organizer/events
         [HttpPost("events")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)
         {
             try
             {
+                // Debug logging
+                Console.WriteLine($"[CREATE EVENT] User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
+                Console.WriteLine($"[CREATE EVENT] User claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
                 {
+                    Console.WriteLine("[CREATE EVENT] User is NULL");
                     return Unauthorized(new { message = "Người dùng không được xác thực" });
                 }
+
+                Console.WriteLine($"[CREATE EVENT] User found: {user.Email}, Roles: {string.Join(", ", await _userManager.GetRolesAsync(user))}");
 
                 var eventItem = new Event
                 {
@@ -104,7 +119,24 @@ namespace QuickEvent.API.Controllers
 
                 await _eventRepository.AddEventAsync(eventItem);
 
-                return Ok(new { message = "Tạo sự kiện thành công", eventId = eventItem.Id });
+                // Trả về full event object thay vì chỉ message
+                var checkIns = await _checkInRepository.GetCheckInsByEventAsync(eventItem.Id);
+                return Ok(new
+                {
+                    eventItem.Id,
+                    eventItem.Title,
+                    eventItem.Description,
+                    eventItem.StartDate,
+                    eventItem.EndDate,
+                    eventItem.Location,
+                    eventItem.MaxAttendees,
+                    eventItem.IsPublic,
+                    eventItem.IsRegistrationOpen,
+                    eventItem.Status,
+                    eventItem.IsCancelled,
+                    CurrentRegistrations = eventItem.Registrations?.Count(r => r.CancellationDate == null) ?? 0,
+                    CheckedInCount = checkIns.Count
+                });
             }
             catch (Exception ex)
             {
@@ -114,6 +146,7 @@ namespace QuickEvent.API.Controllers
 
         // GET: api/organizer/events/{id}
         [HttpGet("events/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<ActionResult<object>> GetEventDetails(int id)
         {
             try
@@ -163,7 +196,7 @@ namespace QuickEvent.API.Controllers
                     eventItem.IsRegistrationOpen,
                     eventItem.Status,
                     eventItem.IsCancelled,
-                    CurrentRegistrations = eventItem.Registrations?.Count ?? 0,
+                    CurrentRegistrations = eventItem.Registrations?.Count(r => r.CancellationDate == null) ?? 0,
                     CheckedInCount = checkIns.Count,
                     Registrations = registrations
                 };
@@ -178,6 +211,7 @@ namespace QuickEvent.API.Controllers
 
         // PUT: api/organizer/events/{id}
         [HttpPut("events/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<IActionResult> UpdateEvent(int id, [FromBody] UpdateEventRequest request)
         {
             try
@@ -215,6 +249,7 @@ namespace QuickEvent.API.Controllers
 
         // DELETE: api/organizer/events/{id}
         [HttpDelete("events/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<IActionResult> CancelEvent(int id, [FromBody] CancelEventRequest request)
         {
             try
@@ -260,6 +295,7 @@ namespace QuickEvent.API.Controllers
 
         // GET: api/organizer/events/{id}/registrations
         [HttpGet("events/{id}/registrations")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<ActionResult<IEnumerable<object>>> GetEventRegistrations(int id)
         {
             try
@@ -306,6 +342,7 @@ namespace QuickEvent.API.Controllers
 
         // POST: api/organizer/checkin
         [HttpPost("checkin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<IActionResult> CheckInParticipant([FromBody] CheckInRequest request)
         {
             try
@@ -316,9 +353,32 @@ namespace QuickEvent.API.Controllers
                     return Unauthorized(new { message = "Người dùng không được xác thực" });
                 }
 
-                // Tìm registration bằng QR code token
-                var registrations = await _registrationRepository.GetRegistrationsByEventAsync(0); // Lấy tất cả để tìm
-                var registration = registrations.FirstOrDefault(r => r.QRCodeToken == request.QRCodeToken);
+                // Validate QR Code signature
+                var qrService = new QRCodeService();
+                var (isValid, registrationId, eventId) = qrService.ValidateQRCode(request.QRCodeToken);
+
+                Registration? registration = null;
+
+                if (isValid && registrationId > 0)
+                {
+                    // QR Code hợp lệ với signature
+                    registration = await _registrationRepository.GetRegistrationByIdAsync(registrationId);
+
+                    if (registration != null && registration.EventId != eventId)
+                    {
+                        return BadRequest(new { message = "Mã QR không thuộc sự kiện này" });
+                    }
+                }
+                else
+                {
+                    // Fallback: Tìm registration bằng QR token trực tiếp (cho QR cũ không có signature)
+                    var allRegistrations = await _context.Registrations
+                        .Include(r => r.Event)
+                        .Include(r => r.User)
+                        .ToListAsync();
+                    
+                    registration = allRegistrations.FirstOrDefault(r => r.QRCodeToken == request.QRCodeToken);
+                }
 
                 if (registration == null)
                 {
@@ -330,11 +390,25 @@ namespace QuickEvent.API.Controllers
                     return Forbid("Bạn không có quyền check-in cho sự kiện này");
                 }
 
+                if (registration.CancellationDate != null)
+                {
+                    return BadRequest(new { message = "Đăng ký đã bị hủy, không thể check-in" });
+                }
+
                 // Kiểm tra đã check-in chưa
                 var existingCheckIn = await _checkInRepository.GetCheckInByRegistrationId(registration.Id);
                 if (existingCheckIn != null)
                 {
-                    return BadRequest(new { message = "Người tham gia đã check-in rồi" });
+                    return BadRequest(new
+                    {
+                        message = "Người tham gia đã check-in rồi",
+                        checkedInAt = existingCheckIn.CheckInTime,
+                        participant = new
+                        {
+                            registration.FullName,
+                            registration.Email
+                        }
+                    });
                 }
 
                 var checkIn = new CheckIn
@@ -346,13 +420,15 @@ namespace QuickEvent.API.Controllers
 
                 await _checkInRepository.AddCheckInAsync(checkIn);
 
-                return Ok(new 
-                { 
+                return Ok(new
+                {
                     message = "Check-in thành công",
                     participant = new
                     {
+                        RegistrationId = registration.Id,
                         registration.FullName,
                         registration.Email,
+                        registration.PhoneNumber,
                         EventTitle = registration.Event.Title,
                         CheckInTime = checkIn.CheckInTime
                     }
@@ -366,6 +442,7 @@ namespace QuickEvent.API.Controllers
 
         // GET: api/organizer/notifications
         [HttpGet("notifications")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<ActionResult<IEnumerable<object>>> GetNotifications()
         {
             try
@@ -398,6 +475,7 @@ namespace QuickEvent.API.Controllers
 
         // PUT: api/organizer/notifications/{id}/mark-read
         [HttpPut("notifications/{id}/mark-read")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Organizer")]
         public async Task<IActionResult> MarkNotificationAsRead(int id)
         {
             try
@@ -420,6 +498,7 @@ namespace QuickEvent.API.Controllers
 
         // GET: api/organizer/statistics
         [HttpGet("statistics")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult<object>> GetStatistics()
         {
             try

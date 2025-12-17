@@ -12,10 +12,11 @@ namespace QuickEvent.Services
 
         public string GenerateQRCodeToken(int registrationId, int eventId)
         {
-            var data = $"{registrationId}:{eventId}:{DateTime.Now:yyyyMMddHHmmss}";
+            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            var data = $"{registrationId}:{eventId}:{timestamp}";
             using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_secretKey));
             var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
-            return $"{registrationId}:{eventId}:{Convert.ToBase64String(hash)}";
+            return $"{registrationId}:{eventId}:{timestamp}:{Convert.ToBase64String(hash)}";
         }
 
         public byte[] GenerateQRCodeImage(string token)
@@ -31,7 +32,7 @@ namespace QuickEvent.Services
             try
             {
                 var parts = token.Split(':');
-                if (parts.Length != 3) return (false, 0, 0);
+                if (parts.Length != 4) return (false, 0, 0);
 
                 if (!int.TryParse(parts[0], out int registrationId) ||
                     !int.TryParse(parts[1], out int eventId))
@@ -39,7 +40,22 @@ namespace QuickEvent.Services
                     return (false, 0, 0);
                 }
 
-                // Trong thực tế, bạn nên thêm kiểm tra thời gian hiệu lực của token
+                // Lấy timestamp và signature từ token
+                var timestamp = parts[2];
+                var receivedSignature = parts[3];
+
+                // Tính lại signature với cùng dữ liệu
+                var data = $"{registrationId}:{eventId}:{timestamp}";
+                using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_secretKey));
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
+                var calculatedSignature = Convert.ToBase64String(hash);
+
+                // So sánh signature (chống giả mạo)
+                if (receivedSignature != calculatedSignature)
+                {
+                    return (false, 0, 0); // Token bị giả mạo!
+                }
+
                 return (true, registrationId, eventId);
             }
             catch
