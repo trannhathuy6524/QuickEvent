@@ -97,6 +97,7 @@ builder.Services.AddControllersWithViews()
     });
 
 builder.Services.AddScoped<QRCodeService>();
+builder.Services.AddSingleton<WebSocketHub>();
 
 // Đăng ký các repository
 builder.Services.AddScoped<IEventRepository, EFEventRepository>();
@@ -109,6 +110,11 @@ builder.Services.AddScoped<IApplicationUserRepository, EFApplicationUserReposito
 builder.Services.AddScoped<IOrganizerRequestRepository, EFOrganizerRequestRepository>();
 
 var app = builder.Build();
+
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(120)
+});
 
 // Cấu hình pipeline xử lý HTTP
 if (!app.Environment.IsDevelopment())
@@ -127,6 +133,29 @@ app.UseAuthorization();
 
 // Map API Controllers TRƯỚC (ưu tiên API routes)
 app.MapControllers();
+
+// ✅ WebSocket endpoint
+app.Map("/api/ws", async context =>
+{
+    if (!context.WebSockets.IsWebSocketRequest)
+    {
+        context.Response.StatusCode = 400;
+        return;
+    }
+
+    var userId = context.Request.Query["userId"].ToString();
+    if (string.IsNullOrEmpty(userId))
+    {
+        context.Response.StatusCode = 400;
+        await context.Response.WriteAsync("UserId is required");
+        return;
+    }
+
+    var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+    var webSocketHub = context.RequestServices.GetRequiredService<WebSocketHub>();
+
+    await webSocketHub.HandleConnectionAsync(userId, webSocket);
+});
 
 // Map Razor Pages
 app.MapRazorPages();
