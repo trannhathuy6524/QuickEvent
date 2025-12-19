@@ -19,19 +19,22 @@ namespace QuickEvent.Areas.Organizer.Controllers
         private readonly ICheckInRepository _checkInRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly QRCodeService _qrCodeService;
+        private readonly WebSocketHub _webSocketHub;
 
         public CheckInController(
             IEventRepository eventRepository,
             IRegistrationRepository registrationRepository,
             ICheckInRepository checkInRepository,
             UserManager<ApplicationUser> userManager,
-            QRCodeService qrCodeService)
+            QRCodeService qrCodeService,
+            WebSocketHub webSocketHub)
         {
             _eventRepository = eventRepository;
             _registrationRepository = registrationRepository;
             _checkInRepository = checkInRepository;
             _userManager = userManager;
             _qrCodeService = qrCodeService;
+            _webSocketHub = webSocketHub;
         }
 
         [HttpGet]
@@ -124,6 +127,25 @@ namespace QuickEvent.Areas.Organizer.Controllers
             };
 
             await _checkInRepository.AddCheckInAsync(checkIn);
+
+            // Gửi WebSocket notification
+            var @event = await _eventRepository.GetEventByIdAsync(eventId);
+            if (@event != null)
+            {
+                await _webSocketHub.NotifyCheckInAsync(
+                    organizerId: @event.OrganizerId,
+                    userId: registration.UserId,
+                    eventId: eventId,
+                    participantName: registration.FullName,
+                    checkInData: new
+                    {
+                        registrationId = registrationId,
+                        eventId = eventId,
+                        participantName = registration.FullName,
+                        checkInTime = checkIn.CheckInTime
+                    }
+                );
+            }
 
             return Json(new
             {
