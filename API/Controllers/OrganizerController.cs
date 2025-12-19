@@ -21,6 +21,7 @@ namespace QuickEvent.API.Controllers
         private readonly ICheckInRepository _checkInRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly WebSocketHub _webSocketHub;
 
         public OrganizerController(
             IEventRepository eventRepository,
@@ -28,7 +29,8 @@ namespace QuickEvent.API.Controllers
             INotificationRepository notificationRepository,
             ICheckInRepository checkInRepository,
             UserManager<ApplicationUser> userManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            WebSocketHub webSocketHub)
         {
             _eventRepository = eventRepository;
             _registrationRepository = registrationRepository;
@@ -36,6 +38,7 @@ namespace QuickEvent.API.Controllers
             _checkInRepository = checkInRepository;
             _userManager = userManager;
             _context = context;
+            _webSocketHub = webSocketHub;
         }
 
         // GET: api/organizer/events
@@ -53,9 +56,29 @@ namespace QuickEvent.API.Controllers
 
                 var events = await _eventRepository.GetEventsByOrganizerAsync(user.Id);
                 var result = new List<object>();
+                var now = DateTime.Now;
 
                 foreach (var e in events)
                 {
+                    // ✅ Tự động cập nhật trạng thái dựa trên EndDate
+                    bool isExpired = e.EndDate.HasValue && e.EndDate.Value < now;
+                    string actualStatus = e.Status;
+                    bool actualIsRegistrationOpen = e.IsRegistrationOpen;
+
+                    if (isExpired && !e.IsCancelled)
+                    {
+                        actualStatus = "Đã đóng";
+                        actualIsRegistrationOpen = false;
+
+                        // Cập nhật vào database nếu chưa đóng
+                        if (e.IsRegistrationOpen || e.Status != "Đã đóng")
+                        {
+                            e.IsRegistrationOpen = false;
+                            e.Status = "Đã đóng";
+                            await _eventRepository.UpdateEventAsync(e);
+                        }
+                    }
+
                     var checkIns = await _checkInRepository.GetCheckInsByEventAsync(e.Id);
                     result.Add(new
                     {
@@ -67,8 +90,8 @@ namespace QuickEvent.API.Controllers
                         e.Location,
                         e.MaxAttendees,
                         e.IsPublic,
-                        e.IsRegistrationOpen,
-                        e.Status,
+                        IsRegistrationOpen = actualIsRegistrationOpen,
+                        Status = actualStatus,
                         e.IsCancelled,
                         CurrentRegistrations = e.Registrations?.Count(r => r.CancellationDate == null) ?? 0,
                         CheckedInCount = checkIns.Count
@@ -121,7 +144,7 @@ namespace QuickEvent.API.Controllers
 
                 // Trả về full event object thay vì chỉ message
                 var checkIns = await _checkInRepository.GetCheckInsByEventAsync(eventItem.Id);
-                return Ok(new
+                var eventData = new
                 {
                     eventItem.Id,
                     eventItem.Title,
@@ -136,7 +159,12 @@ namespace QuickEvent.API.Controllers
                     eventItem.IsCancelled,
                     CurrentRegistrations = eventItem.Registrations?.Count(r => r.CancellationDate == null) ?? 0,
                     CheckedInCount = checkIns.Count
-                });
+                };
+
+                // ✅ REAL-TIME: Broadcast event created
+                await _webSocketHub.NotifyEventCreatedAsync(eventItem.Id, eventData);
+
+                return Ok(eventData);
             }
             catch (Exception ex)
             {
@@ -239,6 +267,26 @@ namespace QuickEvent.API.Controllers
 
                 await _eventRepository.UpdateEventAsync(eventItem);
 
+                // ✅ REAL-TIME: Broadcast event updated
+                var checkIns = await _checkInRepository.GetCheckInsByEventAsync(id);
+                var eventData = new
+                {
+                    eventItem.Id,
+                    eventItem.Title,
+                    eventItem.Description,
+                    eventItem.StartDate,
+                    eventItem.EndDate,
+                    eventItem.Location,
+                    eventItem.MaxAttendees,
+                    eventItem.IsPublic,
+                    eventItem.IsRegistrationOpen,
+                    eventItem.Status,
+                    eventItem.IsCancelled,
+                    CurrentRegistrations = eventItem.Registrations?.Count(r => r.CancellationDate == null) ?? 0,
+                    CheckedInCount = checkIns.Count
+                };
+                await _webSocketHub.NotifyEventUpdatedAsync(id, eventData);
+
                 return Ok(new { message = "Cập nhật sự kiện thành công" });
             }
             catch (Exception ex)
@@ -273,6 +321,8 @@ namespace QuickEvent.API.Controllers
 
                 // Gửi thông báo cho tất cả người đăng ký
                 var registrations = await _registrationRepository.GetRegistrationsByEventAsync(id);
+                var userIds = new List<string>();
+
                 foreach (var registration in registrations)
                 {
                     var notification = new Notification
@@ -283,7 +333,11 @@ namespace QuickEvent.API.Controllers
                         EventId = id
                     };
                     await _notificationRepository.AddNotificationAsync(notification);
+                    userIds.Add(registration.UserId);
                 }
+
+                // ✅ REAL-TIME: Broadcast event deleted & notify participants
+                await _webSocketHub.NotifyEventDeletedAsync(id, request.Reason);
 
                 return Ok(new { message = "Hủy sự kiện thành công" });
             }
@@ -376,7 +430,7 @@ namespace QuickEvent.API.Controllers
                         .Include(r => r.Event)
                         .Include(r => r.User)
                         .ToListAsync();
-                    
+
                     registration = allRegistrations.FirstOrDefault(r => r.QRCodeToken == request.QRCodeToken);
                 }
 
@@ -420,18 +474,29 @@ namespace QuickEvent.API.Controllers
 
                 await _checkInRepository.AddCheckInAsync(checkIn);
 
+                var participantData = new
+                {
+                    RegistrationId = registration.Id,
+                    registration.FullName,
+                    registration.Email,
+                    registration.PhoneNumber,
+                    EventTitle = registration.Event.Title,
+                    CheckInTime = checkIn.CheckInTime
+                };
+
+                // ✅ REAL-TIME: Notify check-in
+                await _webSocketHub.NotifyCheckInAsync(
+                    user.Id,
+                    registration.UserId,
+                    registration.EventId,
+                    registration.FullName,
+                    participantData
+                );
+
                 return Ok(new
                 {
                     message = "Check-in thành công",
-                    participant = new
-                    {
-                        RegistrationId = registration.Id,
-                        registration.FullName,
-                        registration.Email,
-                        registration.PhoneNumber,
-                        EventTitle = registration.Event.Title,
-                        CheckInTime = checkIn.CheckInTime
-                    }
+                    participant = participantData
                 });
             }
             catch (Exception ex)
@@ -512,6 +577,7 @@ namespace QuickEvent.API.Controllers
                 var events = await _eventRepository.GetEventsByOrganizerAsync(user.Id);
                 var totalRegistrations = 0;
                 var totalCheckIns = 0;
+                var now = DateTime.Now;
 
                 foreach (var eventItem in events)
                 {
@@ -522,12 +588,31 @@ namespace QuickEvent.API.Controllers
                     totalCheckIns += checkIns.Count();
                 }
 
+                // ✅ Tính số sự kiện sắp diễn ra và đã qua
+                var upcomingEvents = events.Count(e =>
+                    !e.IsCancelled &&
+                    e.StartDate > now);
+
+                var pastEvents = events.Count(e =>
+                    !e.IsCancelled &&
+                    e.EndDate.HasValue &&
+                    e.EndDate.Value < now);
+
+                // ✅ Sự kiện đang hoạt động: chưa hủy, đăng ký mở, và chưa hết hạn (EndDate)
+                var activeEvents = events.Count(e =>
+                    !e.IsCancelled &&
+                    e.IsRegistrationOpen &&
+                    (!e.EndDate.HasValue || e.EndDate.Value >= now));
+
                 var result = new
                 {
                     TotalEvents = events.Count(),
-                    ActiveEvents = events.Count(e => !e.IsCancelled && e.IsRegistrationOpen),
+                    ActiveEvents = activeEvents,
+                    UpcomingEvents = upcomingEvents,
+                    PastEvents = pastEvents,
                     TotalRegistrations = totalRegistrations,
                     TotalCheckIns = totalCheckIns,
+                    CheckInRate = totalRegistrations > 0 ? (double)totalCheckIns / totalRegistrations * 100 : 0,
                     AttendanceRate = totalRegistrations > 0 ? (double)totalCheckIns / totalRegistrations * 100 : 0
                 };
 

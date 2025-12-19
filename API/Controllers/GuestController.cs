@@ -17,19 +17,22 @@ namespace QuickEvent.API.Controllers
         private readonly INotificationRepository _notificationRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly QRCodeService _qrCodeService;
+        private readonly WebSocketHub _webSocketHub;
 
         public GuestController(
             IEventRepository eventRepository,
             IRegistrationRepository registrationRepository,
             INotificationRepository notificationRepository,
             UserManager<ApplicationUser> userManager,
-            QRCodeService qrCodeService)
+            QRCodeService qrCodeService,
+            WebSocketHub webSocketHub)
         {
             _eventRepository = eventRepository;
             _registrationRepository = registrationRepository;
             _notificationRepository = notificationRepository;
             _userManager = userManager;
             _qrCodeService = qrCodeService;
+            _webSocketHub = webSocketHub;
         }
 
         // GET: api/guest/test - Test endpoint to verify API is working
@@ -202,6 +205,22 @@ namespace QuickEvent.API.Controllers
                 };
                 await _notificationRepository.AddNotificationAsync(notification);
 
+                // ✅ REAL-TIME: Gửi WebSocket notification
+                await _webSocketHub.NotifyRegistrationCreatedAsync(
+                    eventItem.OrganizerId,
+                    registration.Id,
+                    id,
+                    registration.FullName,
+                    new
+                    {
+                        registration.Id,
+                        registration.FullName,
+                        registration.Email,
+                        eventTitle = eventItem.Title,
+                        registrationDate = registration.RegistrationDate
+                    }
+                );
+
                 // Trả về full registration object với QR Code Image
                 return Ok(new
                 {
@@ -330,6 +349,15 @@ namespace QuickEvent.API.Controllers
                 };
                 await _notificationRepository.AddNotificationAsync(notification);
 
+                // ✅ REAL-TIME: Gửi WebSocket notification
+                await _webSocketHub.NotifyRegistrationCancelledAsync(
+                    registration.Event.OrganizerId,
+                    registration.Id,
+                    registration.EventId,
+                    registration.FullName,
+                    request.Reason
+                );
+
                 return Ok(new { message = "Hủy đăng ký thành công" });
             }
             catch (Exception ex)
@@ -385,6 +413,9 @@ namespace QuickEvent.API.Controllers
                 }
 
                 await _notificationRepository.MarkAsReadAsync(id);
+
+                // ✅ REAL-TIME: Gửi WebSocket notification
+                await _webSocketHub.NotifyNotificationReadAsync(user.Id, id);
 
                 return Ok(new { message = "Đánh dấu đã đọc thành công" });
             }

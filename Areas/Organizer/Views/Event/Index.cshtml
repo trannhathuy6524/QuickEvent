@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<QuickEvent.Models.Event>
+@using System.Security.Claims
 
 <style>
     .event-list-container {
@@ -153,7 +154,7 @@
         <tbody>
             @foreach (var @item in Model)
             {
-                <tr>
+                <tr data-event-id="@item.Id">
                     <td>@item.Title</td>
                     <td>@item.StartDate.ToString("dd/MM/yyyy HH:mm")</td>
                     <td>@item.Location</td>
@@ -208,5 +209,132 @@
             btn.classList.add('animate__animated', 'animate__pulse');
             setTimeout(() => btn.classList.remove('animate__animated', 'animate__pulse'), 500);
         });
+    });
+
+    // ✅ WebSocket Real-time Updates
+    let ws = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+
+    function connectWebSocket() {
+        // Lấy userId từ authentication (nếu có)
+        const userId = '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value';
+        if (!userId) {
+            console.warn('No userId found, skipping WebSocket connection');
+            return;
+        }
+
+        // Tạo WebSocket URL
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/api/ws?userId=${userId}`;
+
+        console.log('Connecting to WebSocket:', wsUrl);
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            console.log('✅ WebSocket connected');
+            reconnectAttempts = 0;
+            // Gửi ping định kỳ để giữ kết nối
+            setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send('ping');
+                }
+            }, 30000);
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('📨 WebSocket message:', data);
+
+                // Xử lý các loại message khác nhau
+                switch(data.type) {
+                    case 'event_created':
+                        handleEventCreated(data);
+                        break;
+                    case 'event_updated':
+                        handleEventUpdated(data);
+                        break;
+                    case 'event_deleted':
+                        handleEventDeleted(data);
+                        break;
+                    case 'registration_created':
+                    case 'registration_cancelled':
+                        // Reload để cập nhật số lượng đăng ký
+                        window.location.reload();
+                        break;
+                    case 'pong':
+                        // Ignore pong messages
+                        break;
+                    case 'connected':
+                        console.log('Connected to WebSocket:', data.message);
+                        break;
+                    default:
+                        console.log('Unknown message type:', data.type);
+                }
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('❌ WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+            console.log('❌ WebSocket disconnected');
+            ws = null;
+
+            // Thử reconnect
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                reconnectAttempts++;
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                console.log(`Reconnecting in ${delay}ms... (attempt ${reconnectAttempts})`);
+                setTimeout(connectWebSocket, delay);
+            }
+        };
+    }
+
+    function handleEventCreated(data) {
+        console.log('New event created:', data.data);
+        // Reload trang để hiển thị event mới
+        window.location.reload();
+    }
+
+    function handleEventUpdated(data) {
+        console.log('Event updated:', data.data);
+        // Reload trang để cập nhật thông tin
+        window.location.reload();
+    }
+
+    function handleEventDeleted(data) {
+        console.log('Event deleted:', data.eventId);
+        // Tìm và xóa row trong table
+        const row = document.querySelector(`tr[data-event-id="${data.eventId}"]`);
+        if (row) {
+            row.style.transition = 'opacity 0.3s';
+            row.style.opacity = '0';
+            setTimeout(() => {
+                row.remove();
+                // Hiển thị thông báo nếu không còn event nào
+                const tbody = document.querySelector('tbody');
+                if (tbody && tbody.children.length === 0) {
+                    window.location.reload();
+                }
+            }, 300);
+        } else {
+            // Nếu không tìm thấy row, reload trang
+            window.location.reload();
+        }
+    }
+
+    // Kết nối WebSocket khi trang load
+    connectWebSocket();
+
+    // Đóng WebSocket khi rời khỏi trang
+    window.addEventListener('beforeunload', () => {
+        if (ws) {
+            ws.close();
+        }
     });
 </script>
