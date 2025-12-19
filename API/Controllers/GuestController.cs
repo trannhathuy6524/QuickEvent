@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using QuickEvent.Models;
+using QuickEvent.Repositories;
 using QuickEvent.Repositories.Interfaces;
 using QuickEvent.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace QuickEvent.API.Controllers
 {
@@ -15,6 +16,7 @@ namespace QuickEvent.API.Controllers
         private readonly IEventRepository _eventRepository;
         private readonly IRegistrationRepository _registrationRepository;
         private readonly INotificationRepository _notificationRepository;
+        private readonly ICheckInRepository _checkInRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly QRCodeService _qrCodeService;
         private readonly WebSocketHub _webSocketHub;
@@ -23,6 +25,7 @@ namespace QuickEvent.API.Controllers
             IEventRepository eventRepository,
             IRegistrationRepository registrationRepository,
             INotificationRepository notificationRepository,
+            ICheckInRepository checkInRepository,
             UserManager<ApplicationUser> userManager,
             QRCodeService qrCodeService,
             WebSocketHub webSocketHub)
@@ -30,6 +33,7 @@ namespace QuickEvent.API.Controllers
             _eventRepository = eventRepository;
             _registrationRepository = registrationRepository;
             _notificationRepository = notificationRepository;
+            _checkInRepository = checkInRepository;
             _userManager = userManager;
             _qrCodeService = qrCodeService;
             _webSocketHub = webSocketHub;
@@ -274,35 +278,45 @@ namespace QuickEvent.API.Controllers
                 }
 
                 var registrations = await _registrationRepository.GetRegistrationsByUserAsync(user.Id);
-                var result = registrations.Select(r => new
+
+                // Lấy thông tin check-in cho từng registration
+                var result = new List<object>();
+                foreach (var r in registrations)
                 {
-                    r.Id,
-                    EventId = r.EventId, // Thêm EventId
-                    UserId = r.UserId, // Thêm UserId
-                    r.FullName,
-                    r.Email,
-                    r.PhoneNumber,
-                    r.AdditionalInfo,
-                    r.RegistrationDate,
-                    r.QRCodeToken,
-                    r.CancellationDate,
-                    r.CancellationReason,
-                    Event = new
+                    var checkIn = await _checkInRepository.GetCheckInByRegistrationId(r.Id);
+                    result.Add(new
                     {
-                        r.Event.Id,
-                        r.Event.Title,
-                        Description = r.Event.Description,
-                        r.Event.StartDate,
-                        r.Event.EndDate,
-                        r.Event.Location,
-                        MaxAttendees = r.Event.MaxAttendees,
-                        IsPublic = r.Event.IsPublic,
-                        IsRegistrationOpen = r.Event.IsRegistrationOpen,
-                        r.Event.Status,
-                        IsCancelled = r.Event.IsCancelled,
-                        CurrentRegistrations = r.Event.Registrations?.Count(reg => reg.CancellationDate == null) ?? 0
-                    }
-                });
+                        r.Id,
+                        EventId = r.EventId, // Thêm EventId
+                        UserId = r.UserId, // Thêm UserId
+                        r.FullName,
+                        r.Email,
+                        r.PhoneNumber,
+                        r.AdditionalInfo,
+                        r.RegistrationDate,
+                        r.QRCodeToken,
+                        r.CancellationDate,
+                        r.CancellationReason,
+                        // Thêm thông tin check-in
+                        HasAttended = checkIn != null,
+                        CheckInTime = checkIn?.CheckInTime,
+                        Event = new
+                        {
+                            r.Event.Id,
+                            r.Event.Title,
+                            Description = r.Event.Description,
+                            r.Event.StartDate,
+                            r.Event.EndDate,
+                            r.Event.Location,
+                            MaxAttendees = r.Event.MaxAttendees,
+                            IsPublic = r.Event.IsPublic,
+                            IsRegistrationOpen = r.Event.IsRegistrationOpen,
+                            r.Event.Status,
+                            IsCancelled = r.Event.IsCancelled,
+                            CurrentRegistrations = r.Event.Registrations?.Count(reg => reg.CancellationDate == null) ?? 0
+                        }
+                    });
+                }
 
                 return Ok(result);
             }
